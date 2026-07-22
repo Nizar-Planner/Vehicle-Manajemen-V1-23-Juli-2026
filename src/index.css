@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@media print {
+  html, body, #root {
+    background-color: white !important;
+    color: black !important;
+    overflow: visible !important;
+    height: auto !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide navigation, headers, sidebars, buttons and background UI during print */
+  nav, header, sidebar, button, .no-print, #app-sidebar, #app-header {
+    display: none !important;
+  }
+
+  /* Expand modal containers and remove scroll restrictions */
+  .fixed {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  /* Remove scroll limitations on print elements */
+  .overflow-y-auto, [class*="max-h-"], [class*="overflow-"] {
+    max-height: none !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  /* Remove box shadows and rounded borders that degrade print quality */
+  .shadow-2xl, .shadow-xl, .shadow-lg, .shadow-md, .shadow-sm, .shadow-xs, .shadow-2xs {
+    box-shadow: none !important;
+  }
+
+  /* Styling for printable containers */
+  #printable-report, #printable-unit-report, #printable-spk {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 1rem !important;
+    border: none !important;
+  }
+}
