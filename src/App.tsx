@@ -22,7 +22,12 @@ import {
   LayoutGrid,
   Users,
   ClipboardCheck,
-  Gauge
+  Gauge,
+  Boxes,
+  ShoppingCart,
+  MessageSquare,
+  ArrowLeft,
+  Grid
 } from 'lucide-react';
 
 import { 
@@ -49,9 +54,14 @@ import MechanicManagement from './components/MechanicManagement';
 import AppSettingsComponent from './components/AppSettingsComponent';
 import InspectionsPlanner from './components/InspectionsPlanner';
 import HmKmLoggingPage from './components/HmKmLoggingPage';
+import ModulePortal from './components/ModulePortal';
+import LogisticPortal from './components/LogisticPortal';
+import PurchasingPortal from './components/PurchasingPortal';
+import ConsultationPortal from './components/ConsultationPortal';
 
 export default function App() {
   // Navigation states
+  const [activeModule, setActiveModule] = useState<'portal' | 'maintenance' | 'logistic' | 'purchasing' | 'consultation'>('portal');
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
@@ -496,32 +506,103 @@ export default function App() {
                   </div>
                   
                   <div className="divide-y divide-slate-800/60 max-h-[70vh] overflow-y-auto">
-                    {menuItems.map((item) => {
-                      const Icon = item.icon;
-                      const isActive = activeTab === item.id;
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => {
-                            setActiveTab(item.id);
-                            setIsMenuOpen(false);
-                          }}
-                          className={`w-full flex items-center justify-between px-4 py-2.5 text-left transition-all text-xs font-semibold hover:bg-slate-800 hover:text-white ${
-                            isActive ? 'bg-slate-800 text-emerald-400 border-l-3 border-emerald-500 font-bold' : 'text-slate-300'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <Icon size={16} className={isActive ? 'text-emerald-400' : 'text-slate-400'} />
-                            <span>{item.label}</span>
-                          </div>
-                          {item.badge !== null && (
-                            <span className={`text-[10px] font-bold font-mono px-1.5 py-0.5 rounded-full text-white ${item.badgeColor || 'bg-emerald-500'}`}>
-                              {item.badge}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
+                    {/* Module Switcher Section */}
+                    <div className="p-2 bg-slate-950 space-y-1">
+                      <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider block px-2 py-1">Pilih Modul Utama</span>
+                      <button
+                        type="button"
+                        onClick={() => { setActiveModule('portal'); setIsMenuOpen(false); }}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-mono font-bold transition-all ${
+                          activeModule === 'portal' ? 'bg-emerald-500 text-slate-950' : 'text-slate-300 hover:bg-slate-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <LayoutGrid size={15} />
+                          <span>Menu Tampilan Portal</span>
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setActiveModule('maintenance'); setIsMenuOpen(false); }}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-mono font-bold transition-all ${
+                          activeModule === 'maintenance' ? 'bg-emerald-500 text-slate-950' : 'text-slate-300 hover:bg-slate-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Wrench size={15} />
+                          <span>Maintenance Armada</span>
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setActiveModule('logistic'); setIsMenuOpen(false); }}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-mono font-bold transition-all ${
+                          activeModule === 'logistic' ? 'bg-blue-500 text-white' : 'text-slate-300 hover:bg-slate-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Boxes size={15} />
+                          <span>Logistic &amp; Gudang</span>
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setActiveModule('purchasing'); setIsMenuOpen(false); }}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-mono font-bold transition-all ${
+                          activeModule === 'purchasing' ? 'bg-amber-500 text-slate-950' : 'text-slate-300 hover:bg-slate-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <ShoppingCart size={15} />
+                          <span>Purchasing &amp; PO</span>
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setActiveModule('consultation'); setIsMenuOpen(false); }}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-mono font-bold transition-all ${
+                          activeModule === 'consultation' ? 'bg-purple-600 text-white' : 'text-slate-300 hover:bg-slate-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <MessageSquare size={15} />
+                          <span>Consultation &amp; AI</span>
+                        </div>
+                      </button>
+                    </div>
+
+                    {/* Submenu for Maintenance */}
+                    {activeModule === 'maintenance' && (
+                      <div className="pt-2">
+                        <span className="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider block px-4 py-1">Fitur Maintenance</span>
+                        {menuItems.map((item) => {
+                          const Icon = item.icon;
+                          const isActive = activeTab === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => {
+                                setActiveTab(item.id);
+                                setIsMenuOpen(false);
+                              }}
+                              className={`w-full flex items-center justify-between px-4 py-2.5 text-left transition-all text-xs font-semibold hover:bg-slate-800 hover:text-white ${
+                                isActive ? 'bg-slate-800 text-emerald-400 border-l-3 border-emerald-500 font-bold' : 'text-slate-300'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <Icon size={16} className={isActive ? 'text-emerald-400' : 'text-slate-400'} />
+                                <span>{item.label}</span>
+                              </div>
+                              {item.badge !== null && (
+                                <span className={`text-[10px] font-bold font-mono px-1.5 py-0.5 rounded-full text-white ${item.badgeColor || 'bg-emerald-500'}`}>
+                                  {item.badge}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
               </>
@@ -531,8 +612,26 @@ export default function App() {
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 bg-emerald-500 shrink-0 rounded-full"></div>
             <span className="font-bold text-slate-900 tracking-tight text-base">FleetCare Pro</span>
-            <span className="text-emerald-700 text-[10px] font-semibold hidden sm:inline bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">Armada UIO</span>
+            <span className="text-slate-700 text-[10px] font-mono font-bold hidden sm:inline bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full uppercase">
+              {activeModule === 'portal' && 'Main Portal'}
+              {activeModule === 'maintenance' && 'Maintenance Armada'}
+              {activeModule === 'logistic' && 'Logistic Gudang'}
+              {activeModule === 'purchasing' && 'Purchasing PO'}
+              {activeModule === 'consultation' && 'Consultation AI'}
+            </span>
           </div>
+
+          {activeModule !== 'portal' && (
+            <button
+              type="button"
+              onClick={() => setActiveModule('portal')}
+              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-mono font-bold rounded-xl transition-all flex items-center gap-1.5 border border-slate-200 cursor-pointer"
+              title="Kembali ke Menu Tampilan Portal"
+            >
+              <ArrowLeft size={14} />
+              <span className="hidden sm:inline">Pilih Modul</span>
+            </button>
+          )}
 
           <div className="h-4 w-px bg-slate-200 hidden md:block"></div>
 
@@ -574,86 +673,120 @@ export default function App() {
             </div>
           ) : (
             <div className="animate-fadeIn w-full mx-auto space-y-6" id="view-inner-content">
-              {activeTab === 'dashboard' && (
-                <Dashboard 
+              {activeModule === 'portal' && (
+                <ModulePortal 
+                  onSelectModule={(mod) => {
+                    setActiveModule(mod);
+                    if (mod === 'maintenance') {
+                      setActiveTab('dashboard');
+                    }
+                  }} 
                   stats={stats} 
-                  units={units} 
-                  parts={parts} 
-                  bookings={bookings} 
-                  totalBays={appSettings?.totalBays || 1}
-                  onNavigate={setActiveTab}
-                  onQuickBook={handleQuickBook}
-                  onQuickRestock={handleQuickRestock}
-                  onRefreshData={triggerRefresh}
                 />
               )}
-              {activeTab === 'uio' && (
-                <UioManager 
-                  units={units} 
-                  parts={parts}
-                  onAddUnit={handleAddUnit}
-                  onUpdateHm={handleUpdateHm}
-                  onDeleteUnit={handleDeleteUnit}
-                  repairs={repairs}
-                  hmLogs={hmLogs}
-                  bookings={bookings}
-                />
-              )}
-              {activeTab === 'hm-logging' && (
-                <HmKmLoggingPage
-                  units={units}
-                  hmLogs={hmLogs}
-                  onUpdateHm={handleUpdateHm}
-                  onRefreshData={triggerRefresh}
-                />
-              )}
-              {activeTab === 'bookings' && (
-                <BookingSystem 
-                  bookings={bookings} 
-                  units={units} 
-                  parts={parts} 
-                  mechanics={mechanics}
-                  onCreateBooking={handleCreateBooking}
-                  onUpdateBookingStatus={handleUpdateBookingStatus}
-                />
-              )}
-              {activeTab === 'inspections' && (
-                <InspectionsPlanner
-                  inspections={inspections}
-                  units={units}
-                  mechanics={mechanics}
-                  parts={parts}
-                  onCreateInspection={handleCreateInspection}
-                  onProcessBacklog={handleProcessBacklog}
-                  onAddComment={handleAddInspectionComment}
-                />
-              )}
-              {activeTab === 'warehouse' && (
-                <Warehouse 
+
+              {activeModule === 'logistic' && (
+                <LogisticPortal 
                   parts={parts} 
                   onAddPart={handleAddSparePart}
                   onUpdatePart={handleUpdateSparePart}
                 />
               )}
-              {activeTab === 'mechanics' && (
-                <MechanicManagement 
-                  mechanics={mechanics}
-                  bookings={bookings}
-                  repairs={repairs}
-                  onCreateMechanic={handleCreateMechanic}
-                  onUpdateMechanic={handleUpdateMechanic}
-                  onDeleteMechanic={handleDeleteMechanic}
-                />
+
+              {activeModule === 'purchasing' && (
+                <PurchasingPortal />
               )}
-              {activeTab === 'settings' && (
-                <AppSettingsComponent 
-                  settings={appSettings}
-                  users={appUsers}
-                  onUpdateSettings={handleUpdateSettings}
-                  onCreateUser={handleCreateUser}
-                  onUpdateUser={handleUpdateUser}
-                  onDeleteUser={handleDeleteUser}
-                />
+
+              {activeModule === 'consultation' && (
+                <ConsultationPortal units={units} />
+              )}
+
+              {activeModule === 'maintenance' && (
+                <>
+                  {activeTab === 'dashboard' && (
+                    <Dashboard 
+                      stats={stats} 
+                      units={units} 
+                      parts={parts} 
+                      bookings={bookings} 
+                      breakdowns={breakdowns}
+                      hmLogs={hmLogs}
+                      totalBays={appSettings?.totalBays || 1}
+                      onNavigate={setActiveTab}
+                      onQuickBook={handleQuickBook}
+                      onQuickRestock={handleQuickRestock}
+                      onRefreshData={triggerRefresh}
+                    />
+                  )}
+                  {activeTab === 'uio' && (
+                    <UioManager 
+                      units={units} 
+                      parts={parts}
+                      onAddUnit={handleAddUnit}
+                      onUpdateHm={handleUpdateHm}
+                      onDeleteUnit={handleDeleteUnit}
+                      repairs={repairs}
+                      hmLogs={hmLogs}
+                      bookings={bookings}
+                    />
+                  )}
+                  {activeTab === 'hm-logging' && (
+                    <HmKmLoggingPage
+                      units={units}
+                      hmLogs={hmLogs}
+                      onUpdateHm={handleUpdateHm}
+                      onRefreshData={triggerRefresh}
+                    />
+                  )}
+                  {activeTab === 'bookings' && (
+                    <BookingSystem 
+                      bookings={bookings} 
+                      units={units} 
+                      parts={parts} 
+                      mechanics={mechanics}
+                      onCreateBooking={handleCreateBooking}
+                      onUpdateBookingStatus={handleUpdateBookingStatus}
+                    />
+                  )}
+                  {activeTab === 'inspections' && (
+                    <InspectionsPlanner
+                      inspections={inspections}
+                      units={units}
+                      mechanics={mechanics}
+                      parts={parts}
+                      onCreateInspection={handleCreateInspection}
+                      onProcessBacklog={handleProcessBacklog}
+                      onAddComment={handleAddInspectionComment}
+                    />
+                  )}
+                  {activeTab === 'warehouse' && (
+                    <Warehouse 
+                      parts={parts} 
+                      onAddPart={handleAddSparePart}
+                      onUpdatePart={handleUpdateSparePart}
+                    />
+                  )}
+                  {activeTab === 'mechanics' && (
+                    <MechanicManagement 
+                      mechanics={mechanics}
+                      bookings={bookings}
+                      repairs={repairs}
+                      onCreateMechanic={handleCreateMechanic}
+                      onUpdateMechanic={handleUpdateMechanic}
+                      onDeleteMechanic={handleDeleteMechanic}
+                    />
+                  )}
+                  {activeTab === 'settings' && (
+                    <AppSettingsComponent 
+                      settings={appSettings}
+                      users={appUsers}
+                      onUpdateSettings={handleUpdateSettings}
+                      onCreateUser={handleCreateUser}
+                      onUpdateUser={handleUpdateUser}
+                      onDeleteUser={handleDeleteUser}
+                    />
+                  )}
+                </>
               )}
             </div>
           )}
