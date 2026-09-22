@@ -28,7 +28,11 @@ import {
   Calendar,
   Gauge,
   SlidersHorizontal,
-  ChevronDown
+  ChevronDown,
+  Filter,
+  PieChart,
+  ShieldAlert,
+  Check
 } from 'lucide-react';
 import BrandLogo from './BrandLogo';
 import { AppUser, UioUnit, SparePart, RepairHistory, BreakdownLog, WorkshopBooking } from '../types';
@@ -67,6 +71,8 @@ export default function ModulePortal({
 }: ModulePortalProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<'30d' | 'current_month' | 'q3'>('current_month');
   const [activeTabOverview, setActiveTabOverview] = useState<'all' | 'reliability' | 'critical' | 'financial'>('all');
+  const [problemTrendFilter, setProblemTrendFilter] = useState<'severity' | 'subsystem'>('severity');
+  const [activeProblemMonth, setActiveProblemMonth] = useState<string | null>(null);
 
   // 1. Calculate PA, MTTR, MTBF
   const kpis = useMemo(() => {
@@ -249,6 +255,196 @@ export default function ModulePortal({
     };
   }, []);
 
+  // 6. Tren Problem 6 Bulan Terakhir (April - September 2026)
+  const problemTrendData = useMemo(() => {
+    const monthlyProblems = [
+      { 
+        month: 'Apr 26', 
+        label: 'April 2026',
+        total: 18, 
+        critical: 4, 
+        medium: 9, 
+        low: 5,
+        resolved: 18,
+        hydraulics: 6,
+        engine: 5,
+        transmission: 3,
+        electrical: 2,
+        undercarriage: 2,
+        avgDowntimeHours: 5.2,
+        primaryDefect: 'Hose boom pecah & Radiator overheat'
+      },
+      { 
+        month: 'Mei 26', 
+        label: 'Mei 2026',
+        total: 16, 
+        critical: 3, 
+        medium: 8, 
+        low: 5,
+        resolved: 16,
+        hydraulics: 5,
+        engine: 4,
+        transmission: 3,
+        electrical: 2,
+        undercarriage: 2,
+        avgDowntimeHours: 4.8,
+        primaryDefect: 'Seal silinder rembes & Kampas kopling aus'
+      },
+      { 
+        month: 'Jun 26', 
+        label: 'Juni 2026',
+        total: 15, 
+        critical: 2, 
+        medium: 8, 
+        low: 5,
+        resolved: 15,
+        hydraulics: 5,
+        engine: 4,
+        transmission: 2,
+        electrical: 2,
+        undercarriage: 2,
+        avgDowntimeHours: 4.2,
+        primaryDefect: 'Alternator drop & Filter solar buntu'
+      },
+      { 
+        month: 'Jul 26', 
+        label: 'Juli 2026',
+        total: 14, 
+        critical: 3, 
+        medium: 7, 
+        low: 4,
+        resolved: 14,
+        hydraulics: 4,
+        engine: 4,
+        transmission: 3,
+        electrical: 2,
+        undercarriage: 1,
+        avgDowntimeHours: 4.0,
+        primaryDefect: 'Overheat BULL-02 & Gigi transmisi DUMP-06'
+      },
+      { 
+        month: 'Agu 26', 
+        label: 'Agustus 2026',
+        total: 11, 
+        critical: 2, 
+        medium: 6, 
+        low: 3,
+        resolved: 11,
+        hydraulics: 4,
+        engine: 2,
+        transmission: 2,
+        electrical: 2,
+        undercarriage: 1,
+        avgDowntimeHours: 3.9,
+        primaryDefect: 'Hose return hidrolik & Sensor temperatur kotor'
+      },
+      { 
+        month: 'Sep 26', 
+        label: 'September 2026 (Bulan Ini)',
+        total: 10, 
+        critical: 1, 
+        medium: 5, 
+        low: 4,
+        resolved: 7, // 2 on repair, 1 open/scheduled
+        hydraulics: 3,
+        engine: 2,
+        transmission: 2,
+        electrical: 2,
+        undercarriage: 1,
+        avgDowntimeHours: 3.8,
+        primaryDefect: 'Gearbox transmisi selip & Seal hydraulic kit'
+      }
+    ];
+
+    const total6Months = monthlyProblems.reduce((sum, m) => sum + m.total, 0); // 84
+    const totalCritical = monthlyProblems.reduce((sum, m) => sum + m.critical, 0); // 15
+    const totalMedium = monthlyProblems.reduce((sum, m) => sum + m.medium, 0); // 43
+    const totalLow = monthlyProblems.reduce((sum, m) => sum + m.low, 0); // 26
+    const totalResolved = monthlyProblems.reduce((sum, m) => sum + m.resolved, 0); // 81
+    const activeUnresolved = total6Months - totalResolved; // 3
+    const avgMonthly = Number((total6Months / 6).toFixed(1)); // 14.0
+
+    const firstMonthTotal = monthlyProblems[0].total; // 18
+    const latestMonthTotal = monthlyProblems[monthlyProblems.length - 1].total; // 10
+    const reductionPercent = Number((((firstMonthTotal - latestMonthTotal) / firstMonthTotal) * 100).toFixed(1)); // 44.4%
+
+    const subsystemBreakdown = [
+      { 
+        name: 'Sistem Hidrolik & Hose Silinder', 
+        shortName: 'Hidrolik & Hose',
+        key: 'hydraulics' as const,
+        count: 27, 
+        percentage: 32.1,
+        colorBg: 'bg-blue-500',
+        textColor: 'text-blue-600 dark:text-blue-400',
+        badgeBg: 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300',
+        topIssue: 'Kebocoran seal kit boom cylinder & hose high-pressure pecah',
+        actionTaken: 'Stok safety seal kit dinaikkan dan inspeksi rutin per 50 HM'
+      },
+      { 
+        name: 'Engine Cooling & Bahan Bakar', 
+        shortName: 'Engine & Fuel',
+        key: 'engine' as const,
+        count: 21, 
+        percentage: 25.0,
+        colorBg: 'bg-rose-500',
+        textColor: 'text-rose-600 dark:text-rose-400',
+        badgeBg: 'bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300',
+        topIssue: 'Overheat radiator di area tanjakan tambang & filter solar tersumbat',
+        actionTaken: 'Flushing radiator berkala & penggantian filter solar per 250 HM'
+      },
+      { 
+        name: 'Transmisi & Powertrain', 
+        shortName: 'Transmisi & Gigi',
+        key: 'transmission' as const,
+        count: 15, 
+        percentage: 17.9,
+        colorBg: 'bg-amber-500',
+        textColor: 'text-amber-600 dark:text-amber-400',
+        badgeBg: 'bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300',
+        topIssue: 'Gigi 3 selip (misal unit DUMP-06) & kampas kopling aus',
+        actionTaken: 'Overhaul gearbox DUMP-06 & kalibrasi valve hidrolik transmisi'
+      },
+      { 
+        name: 'Elektrikal, Starter & Sensor', 
+        shortName: 'Elektrik & Sensor',
+        key: 'electrical' as const,
+        count: 12, 
+        percentage: 14.3,
+        colorBg: 'bg-purple-500',
+        textColor: 'text-purple-600 dark:text-purple-400',
+        badgeBg: 'bg-purple-50 dark:bg-purple-950/50 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300',
+        topIssue: 'Alternator charging drop saat malam & sensor temperatur kotor',
+        actionTaken: 'Pemeriksaan rutin kabel harness 24V dan pembersihan sensor'
+      },
+      { 
+        name: 'Undercarriage & Pengereman', 
+        shortName: 'Undercarriage & Rem',
+        key: 'undercarriage' as const,
+        count: 9, 
+        percentage: 10.7,
+        colorBg: 'bg-slate-500',
+        textColor: 'text-slate-600 dark:text-slate-400',
+        badgeBg: 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300',
+        topIssue: 'Track shoe dozer kendur & kanvas rem aus berdebu',
+        actionTaken: 'Penyetelan tegangan track berkala & rotasi komponen penggerak'
+      }
+    ];
+
+    return {
+      monthlyProblems,
+      total6Months,
+      totalCritical,
+      totalMedium,
+      totalLow,
+      totalResolved,
+      activeUnresolved,
+      avgMonthly,
+      reductionPercent,
+      subsystemBreakdown
+    };
+  }, []);
+
   // Quick module launch shortcuts
   const modules = [
     {
@@ -386,7 +582,7 @@ export default function ModulePortal({
                   <span className="text-red-600 dark:text-red-400 font-bold">DASHBOARD PEMANTAUAN</span>
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-sans mt-0.5">
-                  Monitoring keandalan armada (PA, MTTR, MTBF), unit breakdown, stok part kosong, serta pengawasan biaya perawatan &amp; pengadaan bulanan.
+                  Monitoring keandalan armada (PA, MTTR, MTBF), unit breakdown, stok part kosong, tren problem 6 bulan terakhir, serta pengawasan biaya perawatan &amp; pengadaan bulanan.
                 </p>
               </div>
             </div>
@@ -862,7 +1058,399 @@ export default function ModulePortal({
           </div>
         </div>
 
-        {/* SECTION 3: COST MAINTENANCE PER BULAN & TOTAL PENGADAAN PER BULAN */}
+        {/* SECTION 3: TREN PROBLEM 6 BULAN TERAKHIR (APRIL - SEPTEMBER 2026) */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs p-5 md:p-6 space-y-6" id="fleet-problem-trend-section">
+          {/* Header Row */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800 shrink-0">
+                <TrendingDown size={22} />
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-base font-extrabold font-mono text-slate-900 dark:text-white uppercase tracking-wider">
+                    Tren Problem 6 Bulan Terakhir
+                  </h3>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                    <TrendingDown size={13} />
+                    <span>Turun {problemTrendData.reductionPercent}%</span>
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-sans mt-0.5">
+                  Monitoring frekuensi kejadian breakdown armada tambang, klasifikasi tingkat keparahan, serta komposisi subsistem terdampak (April – September 2026).
+                </p>
+              </div>
+            </div>
+
+            {/* View Mode Filters */}
+            <div className="flex items-center gap-2 self-start md:self-center shrink-0">
+              <span className="text-[11px] font-mono text-slate-400 uppercase hidden sm:inline">Tampilan:</span>
+              <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-mono font-bold">
+                <button
+                  type="button"
+                  onClick={() => setProblemTrendFilter('severity')}
+                  className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                    problemTrendFilter === 'severity'
+                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-black'
+                      : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
+                  }`}
+                >
+                  <AlertTriangle size={13} className={problemTrendFilter === 'severity' ? 'text-amber-500' : ''} />
+                  <span>Tingkat Keparahan</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProblemTrendFilter('subsystem')}
+                  className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                    problemTrendFilter === 'subsystem'
+                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-black'
+                      : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
+                  }`}
+                >
+                  <PieChart size={13} className={problemTrendFilter === 'subsystem' ? 'text-blue-500' : ''} />
+                  <span>Berdasarkan Komponen</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 4 Quick Stat Summaries for 6-Month Period */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5" id="problem-trend-quick-metrics">
+            {/* Metric 1 */}
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-mono text-slate-400 uppercase font-bold block">
+                  Total Problem (6 Bulan)
+                </span>
+                <div className="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white mt-0.5">
+                  {problemTrendData.total6Months} <span className="text-xs font-normal text-slate-500">Kasus</span>
+                </div>
+                <span className="text-[10px] font-mono text-slate-400 block mt-0.5">
+                  Rata-rata: <strong>{problemTrendData.avgMonthly} / bln</strong>
+                </span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900">
+                <AlertTriangle size={18} />
+              </div>
+            </div>
+
+            {/* Metric 2 */}
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-mono text-slate-400 uppercase font-bold block">
+                  Critical Breakdown (Down)
+                </span>
+                <div className="text-xl sm:text-2xl font-black font-mono text-rose-600 dark:text-rose-400 mt-0.5">
+                  {problemTrendData.totalCritical} <span className="text-xs font-normal text-slate-500">Kasus</span>
+                </div>
+                <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold block mt-0.5">
+                  Turun 75% (4 di Apr &rarr; 1 di Sep)
+                </span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900">
+                <AlertOctagon size={18} />
+              </div>
+            </div>
+
+            {/* Metric 3 */}
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-mono text-slate-400 uppercase font-bold block">
+                  Tingkat Penyelesaian
+                </span>
+                <div className="text-xl sm:text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400 mt-0.5">
+                  96.4%
+                </div>
+                <span className="text-[10px] font-mono text-slate-400 block mt-0.5">
+                  81 Selesai &bull; 3 Dalam Penanganan
+                </span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900">
+                <CheckCircle2 size={18} />
+              </div>
+            </div>
+
+            {/* Metric 4 */}
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-mono text-slate-400 uppercase font-bold block">
+                  Subsistem Terbanyak
+                </span>
+                <div className="text-xl sm:text-2xl font-black font-mono text-blue-600 dark:text-blue-400 mt-0.5">
+                  Hidrolik
+                </div>
+                <span className="text-[10px] font-mono text-slate-400 block mt-0.5">
+                  27 Kasus (32.1% dari total)
+                </span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900">
+                <Wrench size={18} />
+              </div>
+            </div>
+          </div>
+
+          {/* Bento Grid: Left Chart + Right Subsystems breakdown */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            {/* Left (7 Cols): Monthly Bar Visualizer */}
+            <div className="lg:col-span-7 p-4 sm:p-5 rounded-2xl bg-slate-50/70 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h4 className="text-xs font-black font-mono uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+                      <BarChart3 size={15} className="text-orange-500" />
+                      <span>Grafik Kejadian Problem per Bulan (Apr - Sep '26)</span>
+                    </h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {problemTrendFilter === 'severity'
+                        ? 'Visualisasi batang bertumpuk berdasarkan tingkat urgensi (Critical, Medium, Low)'
+                        : 'Visualisasi sebaran jenis komponen/subsistem yang mengalami kendala'}
+                    </p>
+                  </div>
+
+                  {/* Legend */}
+                  <div className="flex flex-wrap items-center gap-3 text-[10px] font-mono shrink-0">
+                    {problemTrendFilter === 'severity' ? (
+                      <>
+                        <div className="flex items-center gap-1">
+                          <span className="w-2.5 h-2.5 rounded-sm bg-rose-500 inline-block"></span>
+                          <span className="text-slate-600 dark:text-slate-400 font-bold">Critical</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="w-2.5 h-2.5 rounded-sm bg-amber-500 inline-block"></span>
+                          <span className="text-slate-600 dark:text-slate-400 font-bold">Medium</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block"></span>
+                          <span className="text-slate-600 dark:text-slate-400 font-bold">Minor/Low</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-1">
+                          <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                          <span className="text-slate-500">Hidrolik</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                          <span className="text-slate-500">Engine</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                          <span className="text-slate-500">Transmisi</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                          <span className="text-slate-500">Elektrik</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* The Interactive Chart Container */}
+                <div className="pt-6 pb-2">
+                  <div className="flex items-end gap-3 sm:gap-4 h-48 border-b border-slate-200 dark:border-slate-800 px-1 sm:px-3">
+                    {problemTrendData.monthlyProblems.map((m, idx) => {
+                      const maxTotal = 20;
+                      const heightPercent = Math.round((m.total / maxTotal) * 100);
+                      const isCurrent = idx === problemTrendData.monthlyProblems.length - 1;
+                      const isHovered = activeProblemMonth === m.month;
+
+                      // Severity heights
+                      const critH = Math.round((m.critical / m.total) * 100);
+                      const medH = Math.round((m.medium / m.total) * 100);
+                      const lowH = 100 - critH - medH;
+
+                      // Subsystem heights
+                      const hydH = Math.round((m.hydraulics / m.total) * 100);
+                      const engH = Math.round((m.engine / m.total) * 100);
+                      const transH = Math.round((m.transmission / m.total) * 100);
+                      const electH = Math.round((m.electrical / m.total) * 100);
+                      const underH = 100 - hydH - engH - transH - electH;
+
+                      return (
+                        <div
+                          key={m.month}
+                          onMouseEnter={() => setActiveProblemMonth(m.month)}
+                          onMouseLeave={() => setActiveProblemMonth(null)}
+                          className="flex-1 flex flex-col items-center justify-end h-full group relative cursor-pointer"
+                        >
+                          {/* Rich Floating Tooltip */}
+                          <div
+                            className={`absolute -top-24 sm:-top-28 z-30 transition-all duration-200 pointer-events-none ${
+                              isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+                            } bg-slate-900 text-white p-2.5 rounded-xl shadow-xl text-[10px] font-mono min-w-[170px] border border-slate-700`}
+                          >
+                            <div className="flex items-center justify-between border-b border-slate-700 pb-1 mb-1 font-bold text-slate-300">
+                              <span>{m.label}</span>
+                              <span className="text-amber-400 font-extrabold">{m.total} Problem</span>
+                            </div>
+                            <div className="space-y-0.5 text-slate-300">
+                              <div className="flex justify-between">
+                                <span className="text-rose-400 font-bold">Critical: {m.critical}</span>
+                                <span className="text-amber-400 font-bold">Medium: {m.medium}</span>
+                                <span className="text-emerald-400 font-bold">Low: {m.low}</span>
+                              </div>
+                              <div className="text-[9px] text-slate-400 pt-0.5">
+                                Avg Downtime: <strong className="text-white">{m.avgDowntimeHours} Jam/kasus</strong>
+                              </div>
+                              <div className="text-[9px] text-amber-200 line-clamp-1 pt-0.5">
+                                Fokus: {m.primaryDefect}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Total count badge above bar */}
+                          <div
+                            className={`text-center text-xs font-black font-mono mb-1.5 transition-transform ${
+                              isHovered ? 'scale-125 text-orange-600 dark:text-orange-400' : isCurrent ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'
+                            }`}
+                          >
+                            {m.total}
+                          </div>
+
+                          {/* The Bar */}
+                          <div
+                            className={`w-full max-w-[48px] rounded-t-lg transition-all duration-300 overflow-hidden flex flex-col-reverse relative ${
+                              isCurrent ? 'ring-2 ring-emerald-500 shadow-md' : 'group-hover:brightness-110'
+                            }`}
+                            style={{ height: `${heightPercent}%` }}
+                          >
+                            {problemTrendFilter === 'severity' ? (
+                              <>
+                                <div style={{ height: `${lowH}%` }} className="bg-emerald-500 w-full" title={`Minor: ${m.low}`} />
+                                <div style={{ height: `${medH}%` }} className="bg-amber-500 w-full" title={`Medium: ${m.medium}`} />
+                                <div style={{ height: `${critH}%` }} className="bg-rose-500 w-full" title={`Critical: ${m.critical}`} />
+                              </>
+                            ) : (
+                              <>
+                                <div style={{ height: `${underH}%` }} className="bg-slate-500 w-full" title={`Undercarriage: ${m.undercarriage}`} />
+                                <div style={{ height: `${electH}%` }} className="bg-purple-500 w-full" title={`Elektrik: ${m.electrical}`} />
+                                <div style={{ height: `${transH}%` }} className="bg-amber-500 w-full" title={`Transmisi: ${m.transmission}`} />
+                                <div style={{ height: `${engH}%` }} className="bg-rose-500 w-full" title={`Engine: ${m.engine}`} />
+                                <div style={{ height: `${hydH}%` }} className="bg-blue-500 w-full" title={`Hidrolik: ${m.hydraulics}`} />
+                              </>
+                            )}
+                          </div>
+
+                          {/* Month Label */}
+                          <span
+                            className={`text-[11px] font-mono mt-2 ${
+                              isCurrent
+                                ? 'font-black text-emerald-600 dark:text-emerald-400'
+                                : isHovered
+                                ? 'font-bold text-slate-900 dark:text-white'
+                                : 'text-slate-400 dark:text-slate-500'
+                            }`}
+                          >
+                            {m.month}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Trend Diagnostic Insight Callout */}
+              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-start gap-3">
+                <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
+                  <CheckCircle2 size={16} />
+                </div>
+                <div className="space-y-1">
+                  <div className="text-xs font-bold font-mono text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <span>EVALUASI TREN: PENURUNAN KERUSAKAN 44.4% TERCAPAI</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400 font-sans leading-relaxed">
+                    Insiden problem armada berkurang konsisten dari <strong>18 kasus (April)</strong> menjadi <strong>10 kasus (September)</strong>.
+                    Tindakan preventif berupa jadwal servis berkala 250 HM, penggantian seal kit hidrolik terjadwal, dan pre-use checklist terbukti menekan breakdown tak terduga secara signifikan.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right (5 Cols): Subsystem Breakdown & Root Causes */}
+            <div className="lg:col-span-5 p-4 sm:p-5 rounded-2xl bg-slate-50/70 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2.5">
+                  <div>
+                    <h4 className="text-xs font-black font-mono uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+                      <PieChart size={15} className="text-blue-500" />
+                      <span>Sebaran 5 Subsistem Kerusakan</span>
+                    </h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      Komponen paling rentan selama 6 bulan terakhir
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-slate-400">
+                    Total: 84 Problem
+                  </span>
+                </div>
+
+                {/* Subsystem List */}
+                <div className="space-y-2.5">
+                  {problemTrendData.subsystemBreakdown.map((item, i) => (
+                    <div
+                      key={item.key}
+                      className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 hover:border-slate-300 transition-all"
+                    >
+                      <div className="flex items-center justify-between text-xs font-mono">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-[10px] text-slate-500">
+                            #{i + 1}
+                          </span>
+                          <span className="font-extrabold text-slate-900 dark:text-white">
+                            {item.shortName}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-extrabold text-slate-900 dark:text-white font-mono">
+                            {item.count} <span className="font-normal text-[10px] text-slate-400">kasus</span>
+                          </span>
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border ${item.badgeBg}`}>
+                            {item.percentage}%
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Progress bar */}
+                      <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div className={`h-full ${item.colorBg} rounded-full`} style={{ width: `${item.percentage}%` }}></div>
+                      </div>
+
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 font-sans leading-tight">
+                        <span className="font-bold text-slate-700 dark:text-slate-300">Masalah Dominan:</span> {item.topIssue}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons to deep dive */}
+              <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => onSelectModule('maintenance')}
+                  className="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                >
+                  <Wrench size={13} />
+                  <span>Lihat Riwayat Kerusakan</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSelectModule('consultation')}
+                  className="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
+                  title="Konsultasi Diagnostik Kerusakan dengan AI Assistant"
+                >
+                  <Sparkles size={13} className="text-amber-500" />
+                  <span>AI Advisor</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 4: COST MAINTENANCE PER BULAN & TOTAL PENGADAAN PER BULAN */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5" id="maintenance-cost-and-procurement">
           {/* PANEL A: COST MAINTENANCE PER BULAN */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs p-5 flex flex-col justify-between space-y-4">
@@ -1146,7 +1734,7 @@ export default function ModulePortal({
           </div>
         </div>
 
-        {/* SECTION 4: AKSES CEPAT MODUL OPERASIONAL (QUICK LAUNCHER) */}
+        {/* SECTION 5: AKSES CEPAT MODUL OPERASIONAL (QUICK LAUNCHER) */}
         <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2.5">
             <div>
