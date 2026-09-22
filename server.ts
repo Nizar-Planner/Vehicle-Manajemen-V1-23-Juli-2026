@@ -223,6 +223,26 @@ const generateId = (prefix: string) => `${prefix}-${Math.random().toString(36).s
       minStock: 10,
       unit: "Pcs",
       price: 750000
+    },
+    {
+      id: "P-VBELT-CAT",
+      code: "VBELT-CAT320",
+      name: "Fan & Alternator V-Belt CAT 320D",
+      category: "Engine Parts",
+      stock: 0,
+      minStock: 4,
+      unit: "Pcs",
+      price: 420000
+    },
+    {
+      id: "P-SEAL-HYD",
+      code: "SEAL-BOOM-D85",
+      name: "Hydraulic Cylinder Boom Seal Kit Komatsu D85",
+      category: "Hydraulics",
+      stock: 0,
+      minStock: 3,
+      unit: "Set",
+      price: 2750000
     }
   ];
 
@@ -510,6 +530,13 @@ const generateId = (prefix: string) => `${prefix}-${Math.random().toString(36).s
   ];
 
   const appUsers = [
+    {
+      "id": "U-000",
+      "username": "ahmadnizar",
+      "name": "Ahmad Nizar Arif",
+      "role": "Super Admin",
+      "status": "Active"
+    },
     {
       id: "U-001",
       username: "arfan",

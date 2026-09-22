@@ -6,6 +6,115 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
+/* ==========================================================================
+   GLOBAL DARK MODE STYLES
+   Triggered when .dark is present on html element
+   ========================================================================== */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #020617;
+  color: #f1f5f9;
+}
+
+/* Shell & Layouts */
+html.dark #app-shell {
+  background-color: #020617 !important;
+  color: #f1f5f9 !important;
+}
+
+html.dark header#navbar {
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
+}
+
+/* Cards & Surface Containers */
+html.dark .bg-white {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+html.dark .bg-slate-50,
+html.dark .bg-slate-50\/70,
+html.dark .bg-slate-50\/50,
+html.dark .bg-slate-100 {
+  background-color: #090e1a !important;
+}
+
+html.dark .bg-slate-100\/80,
+html.dark .bg-slate-100\/60,
+html.dark .bg-slate-200 {
+  background-color: #1e293b !important;
+}
+
+/* Borders */
+html.dark .border-slate-200,
+html.dark .border-slate-100,
+html.dark .border-slate-300 {
+  border-color: #1e293b !important;
+}
+
+/* Typography */
+html.dark .text-slate-900,
+html.dark .text-slate-800 {
+  color: #f8fafc !important;
+}
+
+html.dark .text-slate-700,
+html.dark .text-slate-600 {
+  color: #cbd5e1 !important;
+}
+
+html.dark .text-slate-500,
+html.dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+html.dark .text-navy-dark-force {
+  color: #0A1931 !important;
+}
+
+/* Form Inputs, Selects & Textareas */
+html.dark input:not([type="checkbox"]):not([type="radio"]),
+html.dark select,
+html.dark textarea {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* Tables */
+html.dark table thead th {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+
+html.dark table tbody tr {
+  border-color: #1e293b !important;
+}
+
+html.dark table tbody tr:hover {
+  background-color: rgba(30, 41, 59, 0.6) !important;
+}
+
+/* Shadows in dark mode */
+html.dark .shadow-xs,
+html.dark .shadow-sm,
+html.dark .shadow-md,
+html.dark .shadow-lg,
+html.dark .shadow-xl,
+html.dark .shadow-2xl {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.65) !important;
+}
+
 @media print {
   html, body, #root {
     background-color: white !important;

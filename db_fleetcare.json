@@ -1,0 +1,615 @@
+{
+  "uioUnits": [
+    {
+      "id": "U-EXCA01",
+      "code": "EXCA-01",
+      "name": "Caterpillar 320D Excavator",
+      "category": "Excavator",
+      "serialNumber": "CAT320D-123456",
+      "engineNumber": "C6.4-9876",
+      "manufactureYear": 2021,
+      "location": "Site Maro (Sektor Barat)",
+      "status": "Operating",
+      "currentHm": 4120,
+      "currentKm": 8240,
+      "lastServiceHm": 4000,
+      "lastOilChangeHm": 4000,
+      "serviceInterval": 250,
+      "oilChangeInterval": 250,
+      "notes": "Kondisi bucket mulus, sistem hidrolik normal.",
+      "photoUrl": ""
+    },
+    {
+      "id": "U-BULL02",
+      "code": "BULL-02",
+      "name": "Komatsu D85ESS-2 Bulldozer",
+      "category": "Bulldozer",
+      "serialNumber": "KOMD85-7729",
+      "engineNumber": "SAD6D125",
+      "manufactureYear": 2020,
+      "location": "Site North (Area Land Clearing)",
+      "status": "Operating",
+      "currentHm": 6280,
+      "currentKm": 31250,
+      "lastServiceHm": 6280,
+      "lastOilChangeHm": 6280,
+      "serviceInterval": 250,
+      "oilChangeInterval": 250,
+      "notes": "Sedang perbaikan radiator bocor dan overheat.",
+      "photoUrl": ""
+    },
+    {
+      "id": "U-DUMP05",
+      "code": "DUMP-05",
+      "name": "Hino Ranger FM 260 JD",
+      "category": "Dump Truck",
+      "serialNumber": "HINO-FM-5541",
+      "engineNumber": "J08E",
+      "manufactureYear": 2022,
+      "location": "Site South (Hauling Jalan Utama)",
+      "status": "Operating",
+      "currentHm": 22400,
+      "currentKm": 112000,
+      "lastServiceHm": 20000,
+      "lastOilChangeHm": 20000,
+      "serviceInterval": 5000,
+      "oilChangeInterval": 5000,
+      "notes": "Sistem rem baru diganti bulan lalu. Lancar.",
+      "photoUrl": ""
+    },
+    {
+      "id": "U-DUMP06",
+      "code": "DUMP-06",
+      "name": "Hino Ranger FM 260 JD",
+      "category": "Dump Truck",
+      "serialNumber": "HINO-FM-5542",
+      "engineNumber": "J08E-X",
+      "manufactureYear": 2022,
+      "location": "Workshop Site South",
+      "status": "Breakdown",
+      "currentHm": 18750,
+      "currentKm": 93750,
+      "lastServiceHm": 15000,
+      "lastOilChangeHm": 15000,
+      "serviceInterval": 5000,
+      "oilChangeInterval": 5000,
+      "notes": "Kerusakan transmisi gigi 3 selip.",
+      "photoUrl": ""
+    },
+    {
+      "id": "U-LOAD01",
+      "code": "LOAD-01",
+      "name": "CAT 950GC Wheel Loader",
+      "category": "Wheel Loader",
+      "serialNumber": "CAT950-559",
+      "engineNumber": "C7.1",
+      "manufactureYear": 2021,
+      "location": "Stockpile Utama Maro",
+      "status": "Operating",
+      "currentHm": 3110,
+      "currentKm": 6220,
+      "lastServiceHm": 3000,
+      "lastOilChangeHm": 3000,
+      "serviceInterval": 250,
+      "oilChangeInterval": 250,
+      "notes": "Grip ban belakang mulai menipis, masih layak pakai.",
+      "photoUrl": ""
+    },
+    {
+      "id": "U-LV09",
+      "code": "LV-09",
+      "name": "Toyota Hilux 2.4 D-4D",
+      "category": "Light Vehicle",
+      "serialNumber": "YOT-HLX-901",
+      "engineNumber": "2GD-FTV",
+      "manufactureYear": 2023,
+      "location": "Kantor Pusat Maro",
+      "status": "Operating",
+      "currentHm": 42300,
+      "currentKm": 42300,
+      "lastServiceHm": 40000,
+      "lastOilChangeHm": 40000,
+      "serviceInterval": 10000,
+      "oilChangeInterval": 5000,
+      "notes": "Digunakan operasional staff lapangan.",
+      "photoUrl": ""
+    }
+  ],
+  "spareParts": [
+    {
+      "id": "P-OIL15W40-D",
+      "code": "OIL-15W40-D",
+      "name": "Oli Mesin Meditran SX 15W-40 (Drum 200L)",
+      "category": "Oil",
+      "stock": 8,
+      "minStock": 3,
+      "unit": "Drum",
+      "price": 8500000
+    },
+    {
+      "id": "P-OIL15W40-L",
+      "code": "OIL-15W40-L",
+      "name": "Oli Mesin Meditran SX 15W-40 (1 Liter)",
+      "category": "Oil",
+      "stock": 112,
+      "minStock": 50,
+      "unit": "Liter",
+      "price": 75000
+    },
+    {
+      "id": "P-FILOIL-CAT",
+      "code": "FIL-OIL-CAT320",
+      "name": "Filter Oli Caterpillar 320D",
+      "category": "Filter",
+      "stock": 21,
+      "minStock": 5,
+      "unit": "Pcs",
+      "price": 350000
+    },
+    {
+      "id": "P-FILFUEL-HINO",
+      "code": "FIL-FUEL-HINO",
+      "name": "Filter Solar Hino Ranger FM",
+      "category": "Filter",
+      "stock": 15,
+      "minStock": 6,
+      "unit": "Pcs",
+      "price": 185000
+    },
+    {
+      "id": "P-FILAIR-KOM",
+      "code": "FIL-AIR-KOMD85",
+      "name": "Filter Udara Komatsu D85ESS",
+      "category": "Filter",
+      "stock": 4,
+      "minStock": 5,
+      "unit": "Pcs",
+      "price": 850000
+    },
+    {
+      "id": "P-BRKP-HINO",
+      "code": "BRK-PAD-HINO",
+      "name": "Kampas Rem Set Depan Hino Ranger",
+      "category": "Brakes",
+      "stock": 18,
+      "minStock": 4,
+      "unit": "Set",
+      "price": 1200000
+    },
+    {
+      "id": "P-HYDHOSE-34",
+      "code": "HYD-HOSE-34",
+      "name": "Selang Hidrolik High Pressure 3/4 inch (10m)",
+      "category": "Hydraulics",
+      "stock": 6,
+      "minStock": 2,
+      "unit": "Pcs",
+      "price": 1500000
+    },
+    {
+      "id": "P-ALT24V",
+      "code": "ALT-24V-HD",
+      "name": "Alternator 24V Heavy Duty 80A",
+      "category": "Electrical",
+      "stock": 3,
+      "minStock": 2,
+      "unit": "Pcs",
+      "price": 3800000
+    },
+    {
+      "id": "P-TRKSHOE-KOM",
+      "code": "TRK-SHOE-D85",
+      "name": "Track Shoe Komatsu D85ESS",
+      "category": "Engine Parts",
+      "stock": 45,
+      "minStock": 10,
+      "unit": "Pcs",
+      "price": 750000
+    },
+    {
+      "id": "P-VBELT-CAT",
+      "code": "VBELT-CAT320",
+      "name": "Fan & Alternator V-Belt CAT 320D",
+      "category": "Engine Parts",
+      "stock": 0,
+      "minStock": 4,
+      "unit": "Pcs",
+      "price": 420000
+    },
+    {
+      "id": "P-SEAL-HYD",
+      "code": "SEAL-BOOM-D85",
+      "name": "Hydraulic Cylinder Boom Seal Kit Komatsu D85",
+      "category": "Hydraulics",
+      "stock": 0,
+      "minStock": 3,
+      "unit": "Set",
+      "price": 2750000
+    }
+  ],
+  "bookings": [
+    {
+      "id": "B-001",
+      "unitId": "U-BULL02",
+      "unitCode": "BULL-02",
+      "bookingDate": "2026-07-21",
+      "workshopName": "Workshop Site North",
+      "serviceType": "Periodic Service",
+      "targetHm": 6250,
+      "mechanicName": "Suryadi (Senior Mechanic)",
+      "notes": "Periodic Service 250 jam + Ganti Oli Mesin dan Filter Oli",
+      "status": "Completed",
+      "partsUsed": [
+        {
+          "partId": "P-OIL15W40-L",
+          "quantity": 28,
+          "priceAtSale": 75000
+        },
+        {
+          "partId": "P-FILOIL-CAT",
+          "quantity": 1,
+          "priceAtSale": 350000
+        }
+      ],
+      "actualCompletionHm": 6280,
+      "totalCost": 2450000,
+      "kmAtBooking": 31250,
+      "hmAtBooking": 6200,
+      "damageType": "Periodic Maintenance",
+      "complaint": "Suara mesin agak kasar, waktu servis berkala tercapai.",
+      "progressStatus": "Completed",
+      "progressLogs": [
+        {
+          "id": "L-LOG001a",
+          "timestamp": "2026-07-20 08:30",
+          "status": "Admin Processing",
+          "notes": "Work order disetujui, suku cadang dialokasikan.",
+          "updatedBy": "Admin Site"
+        },
+        {
+          "id": "L-LOG001b",
+          "timestamp": "2026-07-21 09:00",
+          "status": "On Repair",
+          "notes": "Unit telah masuk ke Bay-1. Penggantian oli mesin sedang berlangsung.",
+          "updatedBy": "Suryadi (Senior Mechanic)"
+        },
+        {
+          "id": "L-K3OWF5NW6",
+          "timestamp": "2026-09-20 11:17",
+          "status": "Completed",
+          "notes": "Pekerjaan servis telah selesai dikerjakan secara paripurna. Unit dinyatakan rilis operasional. HM Akhir: 6280 HM. Suku cadang terpakai telah dikurangi dari stok gudang secara real-time.",
+          "updatedBy": "Suryadi (Senior Mechanic)"
+        }
+      ]
+    },
+    {
+      "id": "B-002",
+      "unitId": "U-EXCA01",
+      "unitCode": "EXCA-01",
+      "bookingDate": "2026-07-23",
+      "workshopName": "Workshop Utama Maro",
+      "serviceType": "Oil Change",
+      "targetHm": 4250,
+      "mechanicName": "Herianto",
+      "notes": "Penggantian rutin oli mesin dan filter oli cadangan",
+      "status": "Pending",
+      "partsUsed": [
+        {
+          "partId": "P-OIL15W40-L",
+          "quantity": 24,
+          "priceAtSale": 75000
+        }
+      ],
+      "actualCompletionHm": null,
+      "totalCost": 1800000,
+      "kmAtBooking": 21250,
+      "hmAtBooking": 4210,
+      "damageType": "Routine Lubrication",
+      "complaint": "Ganti oli mesin berkala.",
+      "progressStatus": "Admin Processing",
+      "progressLogs": [
+        {
+          "id": "L-LOG002a",
+          "timestamp": "2026-07-20 10:15",
+          "status": "Admin Processing",
+          "notes": "Menunggu jadwal masuk antrean workshop.",
+          "updatedBy": "Admin Site"
+        }
+      ]
+    }
+  ],
+  "breakdowns": [
+    {
+      "id": "L-001",
+      "unitId": "U-DUMP06",
+      "unitCode": "DUMP-06",
+      "reportedDate": "2026-07-18 09:15",
+      "damageDescription": "Kerusakan pada sistem transmisi gigi 3 sering selip dan sulit masuk.",
+      "severity": "High",
+      "reportedBy": "Ahmad Nizar (Operator)",
+      "status": "On Repair",
+      "resolvedDate": null,
+      "actionTaken": "Sedang dilakukan pembongkaran gearbox untuk pemeriksaan kampas kopling ganda."
+    },
+    {
+      "id": "L-002",
+      "unitId": "U-BULL02",
+      "unitCode": "BULL-02",
+      "reportedDate": "2026-07-19 14:30",
+      "damageDescription": "Suhu pendingin mesin terlalu tinggi (overheat) saat dioperasikan di tanjakan.",
+      "severity": "Critical",
+      "reportedBy": "Arif (Mekanik)",
+      "status": "Resolved",
+      "resolvedDate": "2026-09-20 11:17",
+      "actionTaken": "Diselesaikan melalui booking servis #B-001 (Periodic Service) oleh mekanik Suryadi (Senior Mechanic)."
+    }
+  ],
+  "repairs": [
+    {
+      "id": "R-001",
+      "unitId": "U-LV09",
+      "unitCode": "LV-09",
+      "completionDate": "2026-07-10",
+      "serviceType": "Periodic Service",
+      "hmAtService": 40000,
+      "description": "Servis berkala 40.000 KM. Ganti oli mesin, filter oli, rotasi roda, dan kalibrasi rem depan.",
+      "mechanicName": "Joko",
+      "partsUsed": [
+        {
+          "partId": "P-OIL15W40-L",
+          "partName": "Oli Mesin Meditran SX 15W-40 (1 Liter)",
+          "partCode": "OIL-15W40-L",
+          "quantity": 6,
+          "price": 75000
+        }
+      ],
+      "totalCost": 450000,
+      "bookingId": null
+    },
+    {
+      "id": "R-002",
+      "unitId": "U-LOAD01",
+      "unitCode": "LOAD-01",
+      "completionDate": "2026-07-12",
+      "serviceType": "Oil Change",
+      "hmAtService": 3000,
+      "description": "Ganti oli mesin berkala standar 250 jam kerja.",
+      "mechanicName": "M. Arif",
+      "partsUsed": [
+        {
+          "partId": "P-OIL15W40-L",
+          "partName": "Oli Mesin Meditran SX 15W-40 (1 Liter)",
+          "partCode": "OIL-15W40-L",
+          "quantity": 20,
+          "price": 75000
+        }
+      ],
+      "totalCost": 1500000,
+      "bookingId": null
+    },
+    {
+      "id": "R-TH1QBW823",
+      "unitId": "U-BULL02",
+      "unitCode": "BULL-02",
+      "completionDate": "2026-09-20",
+      "serviceType": "Periodic Service",
+      "hmAtService": 6280,
+      "description": "Pekerjaan servis melalui booking #B-001. Notes: Periodic Service 250 jam + Ganti Oli Mesin dan Filter Oli",
+      "mechanicName": "Suryadi (Senior Mechanic)",
+      "partsUsed": [
+        {
+          "partId": "P-OIL15W40-L",
+          "partName": "Oli Mesin Meditran SX 15W-40 (1 Liter)",
+          "partCode": "OIL-15W40-L",
+          "quantity": 28,
+          "price": 75000
+        },
+        {
+          "partId": "P-FILOIL-CAT",
+          "partName": "Filter Oli Caterpillar 320D",
+          "partCode": "FIL-OIL-CAT320",
+          "quantity": 1,
+          "price": 350000
+        }
+      ],
+      "totalCost": 2450000,
+      "bookingId": "B-001"
+    }
+  ],
+  "hmLogs": [
+    {
+      "id": "HML-001",
+      "unitId": "U-EXCA01",
+      "unitCode": "EXCA-01",
+      "previousHm": 4000,
+      "newHm": 4050,
+      "previousKm": 8000,
+      "newKm": 8100,
+      "updatedAt": "2026-07-12 10:00",
+      "notes": "Log rutin harian setelah shift pagi"
+    },
+    {
+      "id": "HML-002",
+      "unitId": "U-EXCA01",
+      "unitCode": "EXCA-01",
+      "previousHm": 4050,
+      "newHm": 4120,
+      "previousKm": 8100,
+      "newKm": 8240,
+      "updatedAt": "2026-07-18 16:30",
+      "notes": "Update mingguan sebelum libur shift"
+    },
+    {
+      "id": "HML-003",
+      "unitId": "U-BULL02",
+      "unitCode": "BULL-02",
+      "previousHm": 6000,
+      "newHm": 6150,
+      "previousKm": 12000,
+      "newKm": 12300,
+      "updatedAt": "2026-07-10 09:15",
+      "notes": "Update rutin oleh pengawas lapangan"
+    },
+    {
+      "id": "HML-004",
+      "unitId": "U-BULL02",
+      "unitCode": "BULL-02",
+      "previousHm": 6150,
+      "newHm": 6280,
+      "previousKm": 12300,
+      "newKm": 12560,
+      "updatedAt": "2026-07-19 11:45",
+      "notes": "Pengecekan sebelum masuk jadwal servis"
+    },
+    {
+      "id": "HML-005",
+      "unitId": "U-DUMP05",
+      "unitCode": "DUMP-05",
+      "previousHm": 20000,
+      "newHm": 21200,
+      "updatedAt": "2026-07-05 08:00",
+      "notes": "Pembacaan KM mingguan jalan hauling"
+    },
+    {
+      "id": "HML-006",
+      "unitId": "U-DUMP05",
+      "unitCode": "DUMP-05",
+      "previousHm": 21200,
+      "newHm": 22400,
+      "updatedAt": "2026-07-15 15:20",
+      "notes": "Pembacaan KM hauling rute maro timur"
+    },
+    {
+      "id": "HML-JNGR75HDC",
+      "unitId": "U-BULL02",
+      "unitCode": "BULL-02",
+      "previousHm": 6280,
+      "newHm": 6280,
+      "previousKm": 12560,
+      "newKm": 31250,
+      "updatedAt": "2026-09-20 11:17",
+      "notes": "Update otomatis via penyelesaian WO #B-001 (Periodic Service)"
+    }
+  ],
+  "mechanics": [
+    {
+      "id": "M-001",
+      "name": "Suryadi",
+      "role": "Mekanik Utama",
+      "availableHours": 173,
+      "schedule": {
+        "2026-07-20": "Work",
+        "2026-07-21": "Work",
+        "2026-07-22": "Work",
+        "2026-07-23": "Work",
+        "2026-07-24": "Work",
+        "2026-07-25": "Off",
+        "2026-07-26": "Off"
+      }
+    },
+    {
+      "id": "M-002",
+      "name": "Herianto",
+      "role": "Mekanik Senior",
+      "availableHours": 173,
+      "schedule": {
+        "2026-07-20": "Work",
+        "2026-07-21": "Work",
+        "2026-07-22": "Work",
+        "2026-07-23": "Work",
+        "2026-07-24": "Work",
+        "2026-07-25": "Off",
+        "2026-07-26": "Off"
+      }
+    },
+    {
+      "id": "M-003",
+      "name": "Joko",
+      "role": "Mekanik Senior",
+      "availableHours": 160,
+      "schedule": {
+        "2026-07-20": "Work",
+        "2026-07-21": "Work",
+        "2026-07-22": "Work",
+        "2026-07-23": "Off",
+        "2026-07-24": "Work",
+        "2026-07-25": "Work",
+        "2026-07-26": "Off"
+      }
+    },
+    {
+      "id": "M-004",
+      "name": "M. Arif",
+      "role": "Helper Mekanik",
+      "availableHours": 173,
+      "schedule": {
+        "2026-07-20": "Work",
+        "2026-07-21": "Work",
+        "2026-07-22": "Work",
+        "2026-07-23": "Work",
+        "2026-07-24": "Work",
+        "2026-07-25": "Off",
+        "2026-07-26": "Off"
+      }
+    }
+  ],
+  "appUsers": [
+    {
+      "id": "U-000",
+      "username": "ahmadnizar",
+      "name": "Ahmad Nizar Arif",
+      "role": "Super Admin",
+      "status": "Active"
+    },
+    {
+      "id": "U-001",
+      "username": "arfan",
+      "name": "Arfan Rico Prasetyo",
+      "role": "Super Admin",
+      "status": "Active"
+    },
+    {
+      "id": "U-002",
+      "username": "bengkel_admin",
+      "name": "Admin Bengkel Maro",
+      "role": "Admin Bengkel",
+      "status": "Active"
+    }
+  ],
+  "appSettings": {
+    "totalBays": 1
+  },
+  "inspections": [
+    {
+      "id": "INS-001",
+      "unitId": "U-EXCA01",
+      "unitCode": "EXCA-01",
+      "unitName": "Caterpillar 320D Excavator",
+      "inspectorName": "Suryadi",
+      "inspectionDate": "2026-07-20",
+      "systemCategory": "Hydraulic",
+      "findings": "Ditemukan rembesan oli tipis pada seal cylinder boom kanan.",
+      "recommendation": "Ganti kit seal cylinder boom sebelum kebocoran bertambah parah.",
+      "urgency": "Urgent",
+      "status": "Pending Planner",
+      "createdAt": "2026-07-20 14:00"
+    },
+    {
+      "id": "INS-002",
+      "unitId": "U-DUMP05",
+      "unitCode": "DUMP-05",
+      "unitName": "Hino Ranger FM 260 JD",
+      "inspectorName": "Herianto",
+      "inspectionDate": "2026-07-19",
+      "systemCategory": "Brakes",
+      "findings": "Ketebalan kampas rem roda belakang kiri tersisa 15%.",
+      "recommendation": "Penggantian kampas rem set belakang.",
+      "urgency": "Routine",
+      "status": "Scheduled",
+      "plannerNotes": "Telah dibuatkan Work Order perbaikan rutin minggu depan.",
+      "workOrderId": "B-002",
+      "createdAt": "2026-07-19 11:30"
+    }
+  ],
+  "dispatchLogs": []
+}

@@ -1820,7 +1820,7 @@ export default function Dashboard({
                   <p className="text-xs font-mono text-slate-500 uppercase mt-0.5">Rentang Tanggal: {reportStartDate} s/d {reportEndDate}</p>
                 </div>
                 <div className="text-right font-mono text-[10px] text-slate-400">
-                  <span>Sistem FleetCare Pro</span>
+                  <span className="font-bold text-slate-700">Sistem FLEET PARTNER</span>
                   <br />
                   <span>Tanggal Cetak: {new Date().toLocaleDateString('id-ID')}</span>
                 </div>

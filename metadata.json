@@ -1,6 +1,6 @@
 {
   "name": "Remix: FleetCare UIO",
-  "description": "Aplikasi manajemen perawatan armada kendaraan dan alat berat (UIO), dilengkapi pelacakan HM/Kilometer, jadwal servis rutin, pengingat oli, histori perbaikan/kerusakan, booking bengkel, dan integrasi stok gudang suku cadang secara real-time.",
+    "description": "Sistem Informasi Manajemen Armada & Alat Berat FLEET PARTNER: Terintegrasi dengan modul Maintenance Armada UIO, Logistic Gudang, Purchasing PO, dan Consultation AI.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

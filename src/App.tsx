@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   ShieldAlert,
   ChevronRight,
+  ChevronDown,
   Menu,
   X,
   Clock,
@@ -27,7 +28,8 @@ import {
   ShoppingCart,
   MessageSquare,
   ArrowLeft,
-  Grid
+  Grid,
+  Check
 } from 'lucide-react';
 
 import { 
@@ -58,12 +60,36 @@ import ModulePortal from './components/ModulePortal';
 import LogisticPortal from './components/LogisticPortal';
 import PurchasingPortal from './components/PurchasingPortal';
 import ConsultationPortal from './components/ConsultationPortal';
+import BrandLogo from './components/BrandLogo';
+import BrandKitModal from './components/BrandKitModal';
+import ServiceNeededModal from './components/ServiceNeededModal';
 
 export default function App() {
   // Navigation states
   const [activeModule, setActiveModule] = useState<'portal' | 'maintenance' | 'logistic' | 'purchasing' | 'consultation'>('portal');
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isBrandKitOpen, setIsBrandKitOpen] = useState(false);
+  const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  // Global Theme Mode (Dark / Light)
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('fleet_dark_mode') === 'true';
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('fleet_dark_mode', 'true');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('fleet_dark_mode', 'false');
+    }
+  }, [isDarkMode]);
   
   // Database states
   const [units, setUnits] = useState<UioUnit[]>([]);
@@ -74,6 +100,23 @@ export default function App() {
   const [hmLogs, setHmLogs] = useState<HmUpdateLog[]>([]);
   const [mechanics, setMechanics] = useState<Mechanic[]>([]);
   const [appUsers, setAppUsers] = useState<AppUser[]>([]);
+  const [currentUser, setCurrentUser] = useState<AppUser>(() => {
+    const saved = localStorage.getItem('fleet_current_user');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // ignore
+      }
+    }
+    return {
+      id: 'U-000',
+      username: 'ahmadnizar',
+      name: 'Ahmad Nizar Arif',
+      role: 'Super Admin',
+      status: 'Active'
+    };
+  });
   const [inspections, setInspections] = useState<MechanicInspection[]>([]);
   const [appSettings, setAppSettings] = useState<AppSettings>({ id: 'default', totalBays: 1 });
   const [stats, setStats] = useState<DashboardStats>({
@@ -119,7 +162,16 @@ export default function App() {
       if (resRepairs.ok) setRepairs(await resRepairs.json());
       if (resHmLogs && resHmLogs.ok) setHmLogs(await resHmLogs.json());
       if (resMechanics && resMechanics.ok) setMechanics(await resMechanics.json());
-      if (resUsers && resUsers.ok) setAppUsers(await resUsers.json());
+      if (resUsers && resUsers.ok) {
+        const userList: AppUser[] = await resUsers.json();
+        setAppUsers(userList);
+        const match = userList.find(u => u.username === currentUser.username || u.name === currentUser.name || u.id === currentUser.id);
+        if (match) {
+          setCurrentUser(match);
+        } else if (userList.length > 0 && !localStorage.getItem('fleet_current_user')) {
+          setCurrentUser(userList[0]);
+        }
+      }
       if (resSettings && resSettings.ok) setAppSettings(await resSettings.json());
       if (resInspections && resInspections.ok) setInspections(await resInspections.json());
     } catch (err) {
@@ -475,20 +527,32 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50/70 flex flex-col font-sans text-slate-800" id="app-shell">
+    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50/70 text-slate-800'}`} id="app-shell">
       {/* Top Header Navigation Bar */}
-      <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 sm:px-8 shrink-0 shadow-xs" id="navbar">
+      <header className={`h-16 border-b flex items-center justify-between px-6 sm:px-8 shrink-0 shadow-xs transition-colors duration-300 ${isDarkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'}`} id="navbar">
         <div className="flex items-center gap-4">
           
-          {/* Compact Dropdown Menu Trigger Container */}
+          {/* Compact Dropdown Menu Trigger Container with Brand Logo */}
           <div className="relative">
             <button
+              type="button"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="group p-2.5 bg-slate-900 hover:bg-emerald-600 text-white transition-all duration-200 flex items-center justify-center cursor-pointer rounded-xl border border-transparent shadow-xs"
+              className={`group h-10 px-2.5 py-1.5 transition-all duration-200 flex items-center gap-2 cursor-pointer rounded-xl border hover:shadow-xs active:scale-95 shadow-2xs ${
+                isDarkMode 
+                  ? 'bg-slate-800/80 hover:bg-slate-800 border-slate-700 hover:border-red-500/50 text-slate-200' 
+                  : 'bg-white hover:bg-slate-50 border-slate-200 hover:border-red-300 text-slate-800'
+              }`}
               id="menu-trigger-button"
-              title="Menu Navigasi"
+              title="Menu Navigasi FLEET PARTNER"
             >
-              <LayoutGrid size={18} className="text-emerald-400 group-hover:rotate-45 transition-transform" />
+              {/* Official FLEET PARTNER Logo Image */}
+              <BrandLogo variant="icon" size="sm" theme={isDarkMode ? 'dark' : 'light'} className="w-8 h-[22px] transition-transform group-hover:scale-105 shrink-0" />
+              <ChevronDown 
+                size={13} 
+                className={`text-slate-400 group-hover:text-red-500 transition-transform duration-200 ${
+                  isMenuOpen ? 'rotate-180 text-red-500' : ''
+                }`} 
+              />
             </button>
 
             {/* Compact Dropdown Menu Panel (Absolute positioned directly underneath) */}
@@ -501,8 +565,8 @@ export default function App() {
                   className="absolute left-0 mt-2 w-64 bg-slate-900 border border-slate-700 text-white shadow-2xl z-50 rounded-2xl overflow-hidden py-1"
                   id="app-menu-dropdown"
                 >
-                  <div className="px-4 py-2.5 border-b border-slate-800 bg-slate-950 flex justify-between items-center">
-                    <span className="text-xs text-emerald-400 font-medium tracking-wide">Navigasi System</span>
+                  <div className="px-4 py-3 border-b border-slate-800 bg-slate-950 flex items-center">
+                    <BrandLogo variant="horizontal" theme="dark" size="sm" />
                   </div>
                   
                   <div className="divide-y divide-slate-800/60 max-h-[70vh] overflow-y-auto">
@@ -609,15 +673,48 @@ export default function App() {
             )}
           </div>
           
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 bg-emerald-500 shrink-0 rounded-full"></div>
-            <span className="font-bold text-slate-900 tracking-tight text-base">FleetCare Pro</span>
-            <span className="text-slate-700 text-[10px] font-mono font-bold hidden sm:inline bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full uppercase">
-              {activeModule === 'portal' && 'Main Portal'}
-              {activeModule === 'maintenance' && 'Maintenance Armada'}
-              {activeModule === 'logistic' && 'Logistic Gudang'}
-              {activeModule === 'purchasing' && 'Purchasing PO'}
-              {activeModule === 'consultation' && 'Consultation AI'}
+          <div 
+            className="flex items-center gap-2.5 select-none"
+          >
+            <div className="flex flex-col justify-center">
+              <div 
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                className="relative cursor-pointer group hover:opacity-85 transition-all active:scale-95"
+                title={`Klik untuk beralih ke ${isDarkMode ? 'Tema Mode Terang' : 'Tema Mode Gelap'}`}
+              >
+                <span 
+                  className={`font-black tracking-[0.20em] uppercase leading-none block text-base sm:text-lg transition-colors duration-200 ${
+                    isDarkMode ? 'text-white group-hover:text-red-400' : 'text-[#0A1931] group-hover:text-red-700'
+                  }`}
+                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                >
+                  FLEET PARTNER
+                </span>
+                {/* Slender arc underline */}
+                <svg 
+                  viewBox="0 0 200 12" 
+                  className="w-full h-1.5 mt-0.5" 
+                  fill="none" 
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path 
+                    d="M 2 10 Q 100 2 198 10 Q 100 5 2 10 Z" 
+                    fill={isDarkMode ? '#38BDF8' : '#0A1931'} 
+                    className="transition-colors duration-200"
+                  />
+                </svg>
+              </div>
+            </div>
+            <span className={`text-[10px] font-mono font-bold hidden sm:inline border px-2.5 py-0.5 rounded-full uppercase transition-colors ${
+              isDarkMode 
+                ? 'bg-slate-800 text-slate-300 border-slate-700' 
+                : 'bg-slate-100 text-slate-700 border-slate-200'
+            }`}>
+              {activeModule === 'portal' && 'Portal Utama'}
+              {activeModule === 'maintenance' && 'Maintenance'}
+              {activeModule === 'logistic' && 'Logistic'}
+              {activeModule === 'purchasing' && 'Purchasing'}
+              {activeModule === 'consultation' && 'Consultation'}
             </span>
           </div>
 
@@ -636,14 +733,67 @@ export default function App() {
           <div className="h-4 w-px bg-slate-200 hidden md:block"></div>
 
           {/* Telemetry Display info in header to maximize screen space */}
-          <div className="hidden md:flex items-center gap-4 text-xs font-medium text-slate-500">
-            <span>Total Armada: <strong className="text-slate-900 font-bold">{units.length} Unit</strong></span>
-            <div className="h-3 w-px bg-slate-200"></div>
-            <span className="text-rose-600 font-semibold">{stats.overdueServiceCount} Unit Perlu Servis</span>
+          <div className="hidden md:flex items-center gap-3 text-xs font-medium text-slate-500">
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={() => {
+                setActiveModule('maintenance');
+                setActiveTab('uio');
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setActiveModule('maintenance');
+                  setActiveTab('uio');
+                }
+              }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 select-none ${
+                activeModule === 'maintenance' && activeTab === 'uio'
+                  ? 'bg-red-50 text-red-950 border-red-300 dark:bg-red-950/50 dark:text-red-200 dark:border-red-800'
+                  : 'bg-white hover:bg-slate-100 text-slate-900 border-slate-300 hover:border-red-300 hover:text-red-700 dark:bg-slate-800/90 dark:hover:bg-slate-800 dark:text-slate-100 dark:border-slate-700 dark:hover:border-red-500/60'
+              }`}
+              title="Klik untuk membuka Halaman Kelola Total Armada UIO"
+            >
+              <Truck size={14} className="text-red-600 dark:text-red-400 shrink-0" />
+              <span className="text-slate-900 dark:text-slate-100 font-semibold">
+                Total Armada: <strong className="font-extrabold text-[#0A1931] dark:text-white underline decoration-red-500/40 underline-offset-2">{units.length} Unit</strong>
+              </span>
+            </span>
+            <div className="h-3 w-px bg-slate-200 dark:bg-slate-800"></div>
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={() => setIsServiceModalOpen(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setIsServiceModalOpen(true);
+                }
+              }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all duration-200 cursor-pointer shadow-xs hover:shadow-sm active:scale-95 select-none ${
+                stats.overdueServiceCount > 0
+                  ? 'bg-[#0A1931] hover:bg-[#12284c] text-white border-[#1b345b] dark:bg-rose-950/60 dark:text-rose-100 dark:border-rose-800 dark:hover:border-rose-700'
+                  : 'bg-[#0A1931] hover:bg-[#12284c] text-white border-[#1b345b] dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700'
+              }`}
+              title="Klik untuk melihat daftar unit armada yang perlu diservis"
+            >
+              <AlertTriangle 
+                size={14} 
+                className={
+                  stats.overdueServiceCount > 0 
+                    ? "text-rose-400 dark:text-rose-400 animate-pulse shrink-0 stroke-[2.5]" 
+                    : "text-slate-300 dark:text-slate-300 shrink-0 stroke-[2]"
+                } 
+              />
+              <span className="text-white dark:text-rose-100 font-bold">
+                <strong className="font-black text-rose-300 dark:text-rose-300 underline decoration-rose-400/80 underline-offset-2">
+                  {stats.overdueServiceCount} Unit
+                </strong> Perlu Servis
+              </span>
+            </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {/* Real-time Refresh trigger */}
           <button 
             onClick={triggerRefresh}
@@ -658,6 +808,102 @@ export default function App() {
           <div className="hidden md:flex items-center gap-1.5 text-xs font-medium text-slate-400">
             <Clock size={14} className="text-slate-400" />
             <span>UTC-7</span>
+          </div>
+
+          {/* Simple Circular Account / Settings Button */}
+          <div className="relative pl-1.5 border-l border-slate-200 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+              className="relative w-8 h-8 rounded-full bg-gradient-to-tr from-[#0A1931] to-[#1e3a68] text-white flex items-center justify-center text-xs font-bold font-mono border-2 border-slate-200 dark:border-slate-700 shadow-xs hover:border-red-500 dark:hover:border-red-500 hover:scale-105 active:scale-95 transition-all cursor-pointer select-none"
+              title={`Akun: ${currentUser.name} (${currentUser.role}) - Klik untuk Pengaturan Akun`}
+            >
+              <span className="uppercase">{currentUser.name.charAt(0)}</span>
+              {/* Online status indicator */}
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900"></span>
+            </button>
+
+            {/* Dropdown Menu when clicked */}
+            {isUserMenuOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setIsUserMenuOpen(false)}
+                />
+                <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl p-3 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  {/* Account Info */}
+                  <div className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+                      {currentUser.name.charAt(0)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                        {currentUser.name}
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                        @{currentUser.username}
+                      </div>
+                      <span className="inline-block mt-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300">
+                        {currentUser.role}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="mt-2.5 space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        setActiveModule('maintenance');
+                        setActiveTab('settings');
+                      }}
+                      className="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors flex items-center gap-2 cursor-pointer"
+                    >
+                      <Settings size={15} className="text-slate-500" />
+                      <span>Buka Pengaturan &amp; Akses</span>
+                    </button>
+
+                    {/* Switch Account quick list if available */}
+                    {appUsers.length > 1 && (
+                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 mb-1.5">
+                          Ganti Akun Masuk
+                        </div>
+                        <div className="space-y-0.5 max-h-36 overflow-y-auto">
+                          {appUsers.map(user => (
+                            <button
+                              key={user.id}
+                              type="button"
+                              onClick={() => {
+                                setCurrentUser(user);
+                                localStorage.setItem('fleet_current_user', JSON.stringify(user));
+                                setIsUserMenuOpen(false);
+                              }}
+                              className={`w-full px-2.5 py-1.5 rounded-lg text-left text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                                user.id === currentUser.id
+                                  ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 font-bold'
+                                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 truncate">
+                                <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] font-bold flex items-center justify-center text-slate-700 dark:text-slate-200 shrink-0">
+                                  {user.name.charAt(0)}
+                                </div>
+                                <span className="truncate">{user.name}</span>
+                              </div>
+                              {user.id === currentUser.id && (
+                                <Check size={14} className="text-red-600 shrink-0 ml-1" />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -681,7 +927,21 @@ export default function App() {
                       setActiveTab('dashboard');
                     }
                   }} 
+                  onNavigateTab={(mod, tab) => {
+                    setActiveModule(mod);
+                    if (tab) {
+                      setActiveTab(tab as any);
+                    }
+                  }}
+                  onOpenBrandKit={() => setIsBrandKitOpen(true)}
                   stats={stats} 
+                  currentUser={currentUser}
+                  units={units}
+                  parts={parts}
+                  repairs={repairs}
+                  breakdowns={breakdowns}
+                  bookings={bookings}
+                  onRefreshData={fetchAllData}
                 />
               )}
 
@@ -792,6 +1052,27 @@ export default function App() {
           )}
         </main>
       </div>
+
+      {/* Brand Identity & Logo Modal */}
+      <BrandKitModal 
+        isOpen={isBrandKitOpen} 
+        onClose={() => setIsBrandKitOpen(false)} 
+      />
+
+      {/* Overdue Service Units Modal */}
+      <ServiceNeededModal
+        isOpen={isServiceModalOpen}
+        onClose={() => setIsServiceModalOpen(false)}
+        units={units}
+        onNavigateToBooking={() => {
+          setActiveModule('maintenance');
+          setActiveTab('bookings');
+        }}
+        onNavigateToUio={() => {
+          setActiveModule('maintenance');
+          setActiveTab('uio');
+        }}
+      />
     </div>
   );
 }

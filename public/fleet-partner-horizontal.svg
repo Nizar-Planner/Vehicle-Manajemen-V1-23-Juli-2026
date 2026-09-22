@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 60" width="100%" height="100%" fill="none">
+  <!-- ICON (6-point aerodynamic emblem scaled to text height) -->
+  <g transform="translate(-1, 13) scale(0.082)">
+    <polygon points="115,45 355,200 115,355 180,275 280,200 180,125" fill="#E5192D" />
+    <polygon points="196,68 425,155 485,200 425,245 196,332 400,200" fill="#0A1931" />
+  </g>
+  
+  <!-- TEXT & ARC -->
+  <g transform="translate(48, 35)">
+    <text x="0" y="0" 
+          font-family="'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
+          font-size="18" 
+          font-weight="900" 
+          letter-spacing="0.22em" 
+          fill="#0A1931">FLEET PARTNER</text>
+    <path d="M 0 10 Q 115 3 230 10 Q 115 6 0 10 Z" fill="#0A1931" />
+  </g>
+</svg>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 520" width="100%" height="100%" fill="none">
+  <!-- FLEET PARTNER EMBLEM -->
+  <g id="fleet-partner-emblem">
+    <!-- RED CHEVRON (6-point aerodynamic wing) -->
+    <polygon points="115,45 355,200 115,355 180,275 280,200 180,125" fill="#E5192D" />
+    
+    <!-- NAVY BLUE CHEVRON (6-point faceted speed wedge) -->
+    <polygon points="196,68 425,155 485,200 425,245 196,332 400,200" fill="#0A1931" />
+  </g>
+
+  <!-- TYPOGRAPHY -->
+  <text x="300" y="440" 
+        font-family="'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
+        font-size="42" 
+        font-weight="900" 
+        letter-spacing="0.25em" 
+        fill="#0A1931" 
+        text-anchor="middle">FLEET PARTNER</text>
+
+  <!-- SWOOSH / CURVED ARC UNDERLINE -->
+  <path d="M 100 480 Q 300 454 500 480 Q 300 464 100 480 Z" fill="#0A1931" />
+</svg>
