@@ -40,7 +40,11 @@ import {
   Star,
   Zap,
   HardHat,
-  ArrowUpRight
+  ArrowUpRight,
+  ArrowDownRight,
+  AlertCircle,
+  ThumbsDown,
+  Info
 } from 'lucide-react';
 import BrandLogo from './BrandLogo';
 import { AppUser, UioUnit, SparePart, RepairHistory, BreakdownLog, WorkshopBooking, ManpowerPerson } from '../types';
@@ -341,7 +345,9 @@ export default function ModulePortal({
   const [manpowerData, setManpowerData] = useState<ManpowerPerson[]>(() => {
     return manpower && manpower.length > 0 ? manpower : DEFAULT_MANPOWER;
   });
-  const [manpowerChartMode, setManpowerChartMode] = useState<'flat_vs_actual' | 'efficiency_bars' | 'role_summary'>('flat_vs_actual');
+  const [manpowerChartMode, setManpowerChartMode] = useState<'top_vs_bottom' | 'flat_vs_actual' | 'efficiency_bars' | 'role_summary'>('top_vs_bottom');
+  const [leaderboardTab, setLeaderboardTab] = useState<'top5' | 'bottom5' | 'both'>('top5');
+  const [chartCohortFilter, setChartCohortFilter] = useState<'all' | 'top5' | 'bottom5'>('all');
   const [hoveredManpowerId, setHoveredManpowerId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -359,7 +365,7 @@ export default function ModulePortal({
     }
   }, [manpower]);
 
-  // Manpower calculations for chart & top 5 performers
+  // Manpower calculations for chart, top 5 & bottom 5 performers
   const manpowerStats = useMemo(() => {
     const list = manpowerData.length > 0 ? manpowerData : DEFAULT_MANPOWER;
     const totalStaff = list.length;
@@ -388,10 +394,31 @@ export default function ModulePortal({
 
     const hoursSurplus = Math.round(totalFlatRate - totalActualHours);
 
-    // Top 5 sorted by efficiencyRatio descending
-    const top5 = [...list]
-      .sort((a, b) => (b.efficiencyRatio || 0) - (a.efficiencyRatio || 0))
-      .slice(0, 5);
+    // Sorted by efficiencyRatio descending
+    const sortedByEfficiency = [...list].sort((a, b) => (b.efficiencyRatio || 0) - (a.efficiencyRatio || 0));
+    
+    // Top 5 performers
+    const top5 = sortedByEfficiency.slice(0, 5);
+    
+    // Bottom 5 performers (sorted ascending: lowest efficiency first)
+    const bottom5 = [...sortedByEfficiency].reverse().slice(0, 5);
+
+    // Top 5 vs Bottom 5 aggregated comparison metrics
+    const top5AvgEff = top5.length > 0
+      ? Number((top5.reduce((sum, p) => sum + (p.efficiencyRatio || 0), 0) / top5.length).toFixed(1))
+      : 110.9;
+
+    const bottom5AvgEff = bottom5.length > 0
+      ? Number((bottom5.reduce((sum, p) => sum + (p.efficiencyRatio || 0), 0) / bottom5.length).toFixed(1))
+      : 102.0;
+
+    const top5Surplus = top5.reduce((sum, p) => sum + ((p.flatRateHoursEarned || 0) - (p.actualWorkHours || 0)), 0);
+    const bottom5Surplus = bottom5.reduce((sum, p) => sum + ((p.flatRateHoursEarned || 0) - (p.actualWorkHours || 0)), 0);
+    const top5TotalFlat = top5.reduce((sum, p) => sum + (p.flatRateHoursEarned || 0), 0);
+    const top5TotalActual = top5.reduce((sum, p) => sum + (p.actualWorkHours || 0), 0);
+    const bottom5TotalFlat = bottom5.reduce((sum, p) => sum + (p.flatRateHoursEarned || 0), 0);
+    const bottom5TotalActual = bottom5.reduce((sum, p) => sum + (p.actualWorkHours || 0), 0);
+    const efficiencyGap = Number((top5AvgEff - bottom5AvgEff).toFixed(1));
 
     // Grouping by role
     const roleMap = new Map<string, { role: string; count: number; totalFlat: number; totalActual: number; totalJobs: number }>();
@@ -425,6 +452,16 @@ export default function ModulePortal({
       hoursSurplus,
       totalCompletedWO,
       top5,
+      bottom5,
+      top5AvgEff,
+      bottom5AvgEff,
+      top5Surplus,
+      bottom5Surplus,
+      top5TotalFlat,
+      top5TotalActual,
+      bottom5TotalFlat,
+      bottom5TotalActual,
+      efficiencyGap,
       roleBreakdown
     };
   }, [manpowerData]);
@@ -2223,7 +2260,7 @@ export default function ModulePortal({
             </div>
           </div>
 
-          {/* Main Dual Grid: Left = Interactive Chart, Right = TOP 5 LEADERBOARD */}
+          {/* Main Dual Grid: Left = Interactive Chart, Right = TOP 5 & BOTTOM 5 LEADERBOARD */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
             {/* PANEL KIRI: GRAFIK PRODUKTIVITAS & EFISIENSI MANPOWER (lg:col-span-7) */}
             <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs p-5 flex flex-col justify-between space-y-4">
@@ -2236,22 +2273,34 @@ export default function ModulePortal({
                       <span>Grafik Produktivitas &amp; Efisiensi Personil</span>
                     </h4>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">
-                      Perbandingan output kerja aktual terhadap standar flat-rate pabrikan
+                      Visualisasi flat-rate, rasio efisiensi, dan komparasi 5 Teratas vs 5 Terbawah
                     </p>
                   </div>
 
                   {/* Mode Selector Tabs */}
-                  <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl gap-1 shrink-0">
+                  <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl gap-1 shrink-0 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => setManpowerChartMode('top_vs_bottom')}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                        manpowerChartMode === 'top_vs_bottom'
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Trophy size={12} className="text-amber-300" />
+                      <span>5 Teratas vs Terbawah</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => setManpowerChartMode('flat_vs_actual')}
                       className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                         manpowerChartMode === 'flat_vs_actual'
                           ? 'bg-blue-600 text-white shadow-xs'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                          : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
-                      Flat vs Jam Fisik
+                      Flat vs Fisik
                     </button>
                     <button
                       type="button"
@@ -2259,10 +2308,10 @@ export default function ModulePortal({
                       className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                         manpowerChartMode === 'efficiency_bars'
                           ? 'bg-blue-600 text-white shadow-xs'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                          : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
-                      Rasio Efisiensi %
+                      Rasio %
                     </button>
                     <button
                       type="button"
@@ -2270,7 +2319,7 @@ export default function ModulePortal({
                       className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                         manpowerChartMode === 'role_summary'
                           ? 'bg-blue-600 text-white shadow-xs'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                          : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
                       Peran Tim
@@ -2278,30 +2327,289 @@ export default function ModulePortal({
                   </div>
                 </div>
 
-                {/* CHART MODE 1: DUAL BAR (FLAT RATE VS ACTUAL WORK HOURS) */}
-                {manpowerChartMode === 'flat_vs_actual' && (
-                  <div className="space-y-3">
-                    {/* Legend */}
-                    <div className="flex flex-wrap items-center justify-between text-[11px] font-mono text-slate-500 bg-slate-50 dark:bg-slate-950/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 gap-2">
-                      <div className="flex items-center gap-4">
+                {/* CHART MODE 1: 5 TERATAS VS 5 TERBAWAH (KOMPARASI VISUAL INTERAKTIF) */}
+                {manpowerChartMode === 'top_vs_bottom' && (
+                  <div className="space-y-4">
+                    {/* Visual Legend Bar */}
+                    <div className="flex flex-wrap items-center justify-between text-[11px] font-mono text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-950/40 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 gap-2">
+                      <div className="flex items-center gap-4 flex-wrap">
                         <div className="flex items-center gap-1.5">
-                          <span className="w-3 h-3 rounded-sm bg-emerald-500 shrink-0"></span>
-                          <span className="text-slate-700 dark:text-slate-300 font-bold">Jam Flat-Rate (Earned)</span>
+                          <span className="w-3 h-3 rounded-sm bg-gradient-to-t from-emerald-600 to-teal-400 shrink-0"></span>
+                          <span className="text-slate-900 dark:text-slate-200 font-bold">5 Teratas (Avg {manpowerStats.top5AvgEff}%)</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <span className="w-3 h-3 rounded-sm bg-blue-500 shrink-0"></span>
-                          <span className="text-slate-700 dark:text-slate-300 font-bold">Jam Aktual (Fisik)</span>
+                          <span className="w-3 h-3 rounded-sm bg-gradient-to-t from-rose-500 to-amber-500 shrink-0"></span>
+                          <span className="text-slate-900 dark:text-slate-200 font-bold">5 Terbawah (Avg {manpowerStats.bottom5AvgEff}%)</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-bold">
-                        <Zap size={12} />
-                        <span>Baseline Standar: 100% Efisiensi</span>
+                      <div className="flex items-center gap-1.5 text-[11px] text-amber-700 dark:text-amber-400 font-bold">
+                        <span className="w-4 h-0.5 border-t-2 border-dashed border-amber-500 inline-block"></span>
+                        <span>Target Standar: 100% Flat-Rate</span>
+                      </div>
+                    </div>
+
+                    {/* Column Chart Container */}
+                    <div className="bg-slate-50/70 dark:bg-slate-950/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800 relative">
+                      {/* Chart Grid Lines and Baseline Marker (100%) */}
+                      <div className="relative h-60 w-full flex items-end justify-between gap-1 sm:gap-2 pt-6 pb-6 border-b border-slate-200 dark:border-slate-700">
+                        {/* 100% Benchmark Line (placed at approx 65% height corresponding to 100% on 70%-120% scale) */}
+                        <div 
+                          className="absolute left-0 right-0 border-t-2 border-dashed border-amber-500/80 z-10 flex items-center justify-end pr-2 pointer-events-none"
+                          style={{ bottom: '48%' }}
+                        >
+                          <span className="text-[10px] font-mono font-black text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/80 px-1.5 py-0.5 rounded shadow-2xs">
+                            🎯 100% Target
+                          </span>
+                        </div>
+
+                        {/* TOP 5 COLUMNS GROUP */}
+                        <div className="flex-1 flex items-end justify-around gap-1 sm:gap-2 h-full">
+                          {manpowerStats.top5.map((person, idx) => {
+                            // Scale height from 70% min to 120% max
+                            const heightPercent = Math.min(100, Math.max(20, Math.round(((person.efficiencyRatio - 75) / (120 - 75)) * 100)));
+                            const isHovered = hoveredManpowerId === person.id;
+                            const hoursDiff = person.flatRateHoursEarned - person.actualWorkHours;
+
+                            return (
+                              <div
+                                key={person.id}
+                                onMouseEnter={() => setHoveredManpowerId(person.id)}
+                                onMouseLeave={() => setHoveredManpowerId(null)}
+                                className="flex-1 flex flex-col items-center h-full justify-end group cursor-pointer relative"
+                              >
+                                {/* Tooltip on Hover */}
+                                {isHovered && (
+                                  <div className="absolute -top-16 z-30 bg-slate-900 text-white text-[10px] font-mono p-2 rounded-lg shadow-lg border border-slate-700 w-36 pointer-events-none animate-fadeIn text-center">
+                                    <div className="font-bold text-emerald-400 truncate">{person.name}</div>
+                                    <div className="text-slate-300">Efisiensi: {person.efficiencyRatio}%</div>
+                                    <div className="text-slate-400 text-[9px]">Flat: {person.flatRateHoursEarned}h | Fisik: {person.actualWorkHours}h</div>
+                                    <div className="text-emerald-300 font-bold text-[9px]">+{hoursDiff}h Hemat</div>
+                                  </div>
+                                )}
+
+                                {/* Score Value on Top of Column */}
+                                <div className="text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300 mb-1 flex items-center gap-0.5">
+                                  {idx === 0 && <span className="text-xs">🥇</span>}
+                                  <span>{person.efficiencyRatio}%</span>
+                                </div>
+
+                                {/* Column Bar */}
+                                <div 
+                                  className={`w-full max-w-[34px] rounded-t-lg transition-all duration-300 ${
+                                    isHovered
+                                      ? 'bg-gradient-to-t from-emerald-600 via-teal-500 to-amber-300 shadow-md scale-105'
+                                      : 'bg-gradient-to-t from-emerald-600 to-teal-400 hover:from-emerald-500 hover:to-teal-300'
+                                  }`}
+                                  style={{ height: `${heightPercent}%` }}
+                                ></div>
+
+                                {/* Label Below */}
+                                <div className="mt-1 text-center w-full">
+                                  <span className="text-[10px] font-mono font-bold text-slate-800 dark:text-slate-200 block truncate">
+                                    {person.name.split(' ')[0]}
+                                  </span>
+                                  <span className="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold block">
+                                    #{idx + 1} Top
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Divider Line Between Top 5 and Bottom 5 */}
+                        <div className="h-full flex flex-col items-center justify-center px-1 border-x border-slate-300 dark:border-slate-700 mx-0.5">
+                          <span className="text-[9px] font-mono font-black text-slate-400 px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800">
+                            VS
+                          </span>
+                        </div>
+
+                        {/* BOTTOM 5 COLUMNS GROUP */}
+                        <div className="flex-1 flex items-end justify-around gap-1 sm:gap-2 h-full">
+                          {manpowerStats.bottom5.map((person, idx) => {
+                            // Scale height from 70% min to 120% max
+                            const heightPercent = Math.min(100, Math.max(20, Math.round(((person.efficiencyRatio - 75) / (120 - 75)) * 100)));
+                            const isHovered = hoveredManpowerId === person.id;
+                            const isBelow100 = person.efficiencyRatio < 100;
+                            const hoursDiff = person.flatRateHoursEarned - person.actualWorkHours;
+
+                            return (
+                              <div
+                                key={person.id}
+                                onMouseEnter={() => setHoveredManpowerId(person.id)}
+                                onMouseLeave={() => setHoveredManpowerId(null)}
+                                className="flex-1 flex flex-col items-center h-full justify-end group cursor-pointer relative"
+                              >
+                                {/* Tooltip on Hover */}
+                                {isHovered && (
+                                  <div className="absolute -top-16 z-30 bg-slate-900 text-white text-[10px] font-mono p-2 rounded-lg shadow-lg border border-slate-700 w-36 pointer-events-none animate-fadeIn text-center">
+                                    <div className="font-bold text-amber-400 truncate">{person.name}</div>
+                                    <div className={isBelow100 ? 'text-rose-400' : 'text-amber-300'}>
+                                      Efisiensi: {person.efficiencyRatio}%
+                                    </div>
+                                    <div className="text-slate-400 text-[9px]">Flat: {person.flatRateHoursEarned}h | Fisik: {person.actualWorkHours}h</div>
+                                    <div className={`font-bold text-[9px] ${hoursDiff < 0 ? 'text-rose-400' : 'text-amber-300'}`}>
+                                      {hoursDiff >= 0 ? `+${hoursDiff}h` : `${hoursDiff}h Defisit`}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Score Value on Top of Column */}
+                                <div className={`text-[10px] font-mono font-bold mb-1 flex items-center gap-0.5 ${
+                                  isBelow100 ? 'text-rose-600 dark:text-rose-400' : 'text-amber-700 dark:text-amber-400'
+                                }`}>
+                                  {isBelow100 && <AlertCircle size={10} className="text-rose-500" />}
+                                  <span>{person.efficiencyRatio}%</span>
+                                </div>
+
+                                {/* Column Bar */}
+                                <div 
+                                  className={`w-full max-w-[34px] rounded-t-lg transition-all duration-300 ${
+                                    isHovered
+                                      ? 'bg-gradient-to-t from-rose-600 via-rose-500 to-amber-400 shadow-md scale-105'
+                                      : isBelow100
+                                      ? 'bg-gradient-to-t from-rose-600 to-rose-400 hover:from-rose-500 hover:to-rose-300'
+                                      : 'bg-gradient-to-t from-amber-600 to-orange-400 hover:from-amber-500 hover:to-orange-300'
+                                  }`}
+                                  style={{ height: `${heightPercent}%` }}
+                                ></div>
+
+                                {/* Label Below */}
+                                <div className="mt-1 text-center w-full">
+                                  <span className="text-[10px] font-mono font-bold text-slate-800 dark:text-slate-200 block truncate">
+                                    {person.name.split(' ')[0]}
+                                  </span>
+                                  <span className={`text-[9px] font-mono font-semibold block ${
+                                    isBelow100 ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400'
+                                  }`}>
+                                    🔻#{idx + 1}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Axis Labels */}
+                      <div className="flex justify-between items-center text-[10px] font-mono text-slate-500 pt-2 px-1">
+                        <span className="text-emerald-700 dark:text-emerald-400 font-bold">
+                          ◀ 5 Personil Performa Tertinggi
+                        </span>
+                        <span className="text-rose-700 dark:text-rose-400 font-bold">
+                          5 Personil Perlu Pembinaan ▶
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Comparative Scorecards Beneath Chart */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      <div className="p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/70 dark:bg-emerald-950/30">
+                        <span className="text-[10px] font-mono text-emerald-800 dark:text-emerald-300 font-bold block uppercase">
+                          Rata-Rata 5 Teratas
+                        </span>
+                        <div className="text-lg font-black font-mono text-emerald-700 dark:text-emerald-400">
+                          {manpowerStats.top5AvgEff}%
+                        </div>
+                        <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 font-semibold">
+                          +{manpowerStats.top5Surplus} Jam Hemat
+                        </span>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl border border-rose-200 dark:border-rose-800/60 bg-rose-50/70 dark:bg-rose-950/30">
+                        <span className="text-[10px] font-mono text-rose-800 dark:text-rose-300 font-bold block uppercase">
+                          Rata-Rata 5 Terbawah
+                        </span>
+                        <div className="text-lg font-black font-mono text-rose-700 dark:text-rose-400">
+                          {manpowerStats.bottom5AvgEff}%
+                        </div>
+                        <span className="text-[10px] font-mono text-rose-700 dark:text-rose-400 font-semibold">
+                          {manpowerStats.bottom5Surplus >= 0 ? `+${manpowerStats.bottom5Surplus}` : manpowerStats.bottom5Surplus} Jam Varians
+                        </span>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl border border-blue-200 dark:border-blue-800/60 bg-blue-50/70 dark:bg-blue-950/30">
+                        <span className="text-[10px] font-mono text-blue-800 dark:text-blue-300 font-bold block uppercase">
+                          Disparitas Efisiensi
+                        </span>
+                        <div className="text-lg font-black font-mono text-blue-700 dark:text-blue-400">
+                          {manpowerStats.efficiencyGap}%
+                        </div>
+                        <span className="text-[10px] font-mono text-blue-600 dark:text-blue-400 font-semibold">
+                          Rentang Gap Performa
+                        </span>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50/70 dark:bg-amber-950/30">
+                        <span className="text-[10px] font-mono text-amber-800 dark:text-amber-300 font-bold block uppercase">
+                          Rekomendasi Tindakan
+                        </span>
+                        <div className="text-xs font-bold font-mono text-amber-800 dark:text-amber-300 mt-1 leading-snug">
+                          Buddy System OJT
+                        </div>
+                        <span className="text-[9px] font-mono text-slate-500 dark:text-slate-400 block mt-0.5">
+                          Tandem Senior &amp; Junior
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* CHART MODE 2: DUAL BAR (FLAT RATE VS ACTUAL WORK HOURS) */}
+                {manpowerChartMode === 'flat_vs_actual' && (
+                  <div className="space-y-3">
+                    {/* Sub-Cohort Filter */}
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 text-xs font-mono font-bold bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                        <button
+                          type="button"
+                          onClick={() => setChartCohortFilter('all')}
+                          className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer ${
+                            chartCohortFilter === 'all' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-2xs' : 'text-slate-600 dark:text-slate-400'
+                          }`}
+                        >
+                          Semua Personil (10)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setChartCohortFilter('top5')}
+                          className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer ${
+                            chartCohortFilter === 'top5' ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-2xs' : 'text-slate-600 dark:text-slate-400'
+                          }`}
+                        >
+                          5 Teratas Saja
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setChartCohortFilter('bottom5')}
+                          className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer ${
+                            chartCohortFilter === 'bottom5' ? 'bg-white dark:bg-slate-700 text-rose-600 shadow-2xs' : 'text-slate-600 dark:text-slate-400'
+                          }`}
+                        >
+                          5 Terbawah Saja
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-3 text-[11px] font-mono text-slate-500">
+                        <div className="flex items-center gap-1">
+                          <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span>
+                          <span className="font-bold text-slate-700 dark:text-slate-300">Flat Rate</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="w-2.5 h-2.5 rounded-sm bg-blue-500"></span>
+                          <span className="font-bold text-slate-700 dark:text-slate-300">Fisik</span>
+                        </div>
                       </div>
                     </div>
 
                     {/* Dual Bars List */}
-                    <div className="space-y-2.5 max-h-[400px] overflow-y-auto pr-1">
-                      {manpowerStats.list.slice(0, 8).map((person, idx) => {
+                    <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
+                      {(chartCohortFilter === 'top5'
+                        ? manpowerStats.top5
+                        : chartCohortFilter === 'bottom5'
+                        ? manpowerStats.bottom5
+                        : manpowerStats.list
+                      ).map((person, idx) => {
                         const maxVal = 200; // scale reference
                         const flatWidth = Math.min(100, Math.round((person.flatRateHoursEarned / maxVal) * 100));
                         const actualWidth = Math.min(100, Math.round((person.actualWorkHours / maxVal) * 100));
@@ -2315,7 +2623,7 @@ export default function ModulePortal({
                             className={`p-2.5 rounded-xl border transition-all ${
                               hoveredManpowerId === person.id
                                 ? 'bg-blue-50/50 dark:bg-blue-950/30 border-blue-300 dark:border-blue-700 shadow-2xs'
-                                : 'bg-slate-50/70 dark:bg-slate-950/30 border-slate-100 dark:border-slate-800'
+                                : 'bg-slate-50/70 dark:bg-slate-950/30 border-slate-200 dark:border-slate-800'
                             }`}
                           >
                             <div className="flex items-center justify-between mb-1.5">
@@ -2324,7 +2632,7 @@ export default function ModulePortal({
                                   idx === 0 ? 'bg-amber-400 text-slate-950 shadow-2xs' :
                                   idx === 1 ? 'bg-slate-300 text-slate-900' :
                                   idx === 2 ? 'bg-amber-700 text-white' :
-                                  'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                                  'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                                 }`}>
                                   {idx + 1}
                                 </span>
@@ -2332,7 +2640,7 @@ export default function ModulePortal({
                                   <span className="text-xs font-bold font-mono text-slate-900 dark:text-white">
                                     {person.name}
                                   </span>
-                                  <span className="text-[10px] text-slate-400 font-mono ml-1.5">
+                                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono ml-1.5">
                                     ({person.role} - {person.skillLevel})
                                   </span>
                                 </div>
@@ -2344,7 +2652,7 @@ export default function ModulePortal({
                                     ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
                                     : 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300'
                                 }`}>
-                                  {surplusHours >= 0 ? `+${surplusHours} Jam Hemat` : `${surplusHours} Jam`}
+                                  {surplusHours >= 0 ? `+${surplusHours} Jam Hemat` : `${surplusHours} Jam Defisit`}
                                 </span>
                                 <span className="text-xs font-black font-mono text-slate-900 dark:text-white bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
                                   {person.efficiencyRatio}%
@@ -2354,30 +2662,28 @@ export default function ModulePortal({
 
                             {/* Dual Bars Container */}
                             <div className="space-y-1">
-                              {/* Flat Rate Bar */}
                               <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-mono text-slate-400 w-12 text-right">Flat:</span>
+                                <span className="text-[10px] font-mono text-slate-500 w-12 text-right">Flat:</span>
                                 <div className="flex-1 h-3 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden relative">
                                   <div 
                                     className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
                                     style={{ width: `${flatWidth}%` }}
                                   ></div>
                                 </div>
-                                <span className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400 w-16 text-right">
+                                <span className="text-[11px] font-mono font-bold text-emerald-700 dark:text-emerald-400 w-16 text-right">
                                   {person.flatRateHoursEarned} Jam
                                 </span>
                               </div>
 
-                              {/* Actual Work Hours Bar */}
                               <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-mono text-slate-400 w-12 text-right">Fisik:</span>
+                                <span className="text-[10px] font-mono text-slate-500 w-12 text-right">Fisik:</span>
                                 <div className="flex-1 h-3 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden relative">
                                   <div 
                                     className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500"
                                     style={{ width: `${actualWidth}%` }}
                                   ></div>
                                 </div>
-                                <span className="text-[11px] font-mono font-bold text-blue-600 dark:text-blue-400 w-16 text-right">
+                                <span className="text-[11px] font-mono font-bold text-blue-700 dark:text-blue-400 w-16 text-right">
                                   {person.actualWorkHours} Jam
                                 </span>
                               </div>
@@ -2389,20 +2695,20 @@ export default function ModulePortal({
                   </div>
                 )}
 
-                {/* CHART MODE 2: EFFICIENCY RATIO PERCENTAGE BARS */}
+                {/* CHART MODE 3: EFFICIENCY RATIO PERCENTAGE BARS */}
                 {manpowerChartMode === 'efficiency_bars' && (
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 bg-slate-50 dark:bg-slate-950/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center justify-between text-[11px] font-mono text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/40 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
                       <span>Rasio = (Total Jam Flat-Rate ÷ Jam Aktual) × 100%</span>
-                      <span className="font-bold text-emerald-600">&gt; 100% = Produktif &amp; Hemat Waktu</span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">&gt; 100% = Produktif &amp; Hemat Waktu</span>
                     </div>
 
-                    <div className="space-y-2.5 max-h-[400px] overflow-y-auto pr-1">
+                    <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
                       {manpowerStats.list.map((person, idx) => {
                         const barWidth = Math.min(100, Math.round((person.efficiencyRatio / 125) * 100));
 
                         return (
-                          <div key={person.id} className="p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800 space-y-1.5">
+                          <div key={person.id} className="p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-950/30 border border-slate-200 dark:border-slate-800 space-y-1.5">
                             <div className="flex items-center justify-between text-xs font-mono">
                               <div className="flex items-center gap-2">
                                 <span className="w-5 text-slate-400 font-bold">#{idx + 1}</span>
@@ -2416,7 +2722,7 @@ export default function ModulePortal({
                                     ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300'
                                     : person.efficiencyRatio >= 100
                                     ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300'
-                                    : 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300'
+                                    : 'bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300'
                                 }`}>
                                   {person.efficiencyRatio}%
                                 </span>
@@ -2431,7 +2737,7 @@ export default function ModulePortal({
                                     ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
                                     : person.efficiencyRatio >= 100
                                     ? 'bg-gradient-to-r from-blue-500 to-cyan-400'
-                                    : 'bg-gradient-to-r from-amber-500 to-yellow-400'
+                                    : 'bg-gradient-to-r from-amber-500 to-rose-400'
                                 }`}
                                 style={{ width: `${barWidth}%` }}
                               ></div>
@@ -2448,7 +2754,7 @@ export default function ModulePortal({
                   </div>
                 )}
 
-                {/* CHART MODE 3: ROLE PERFORMANCE SUMMARY */}
+                {/* CHART MODE 4: ROLE PERFORMANCE SUMMARY */}
                 {manpowerChartMode === 'role_summary' && (
                   <div className="space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2500,153 +2806,400 @@ export default function ModulePortal({
                   onClick={() => onSelectModule('manpower')}
                   className="text-blue-600 dark:text-blue-400 hover:text-blue-700 font-bold flex items-center gap-1 cursor-pointer transition-colors"
                 >
-                  <span>Lihat Roster Lengkap</span>
+                  <span>Buka Modul Manpower</span>
                   <ArrowRight size={13} />
                 </button>
               </div>
             </div>
 
-            {/* PANEL KANAN: TOP 5 PERINGKAT TERATAS MANPOWER (LEADERBOARD) (lg:col-span-5) */}
+            {/* PANEL KANAN: LEADERBOARD & EVALUASI 5 TERATAS & 5 TERBAWAH (lg:col-span-5) */}
             <div className="lg:col-span-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs p-5 flex flex-col justify-between space-y-4">
               <div className="space-y-3.5">
-                {/* Header Leaderboard */}
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                {/* Header Leaderboard with Toggle Tabs for Top 5 & Bottom 5 */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-100 dark:border-slate-800 pb-3">
                   <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900">
-                      <Trophy size={18} />
+                    <div className={`p-2 rounded-xl border ${
+                      leaderboardTab === 'top5'
+                        ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900'
+                        : leaderboardTab === 'bottom5'
+                        ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900'
+                        : 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900'
+                    }`}>
+                      {leaderboardTab === 'top5' ? <Trophy size={18} /> : leaderboardTab === 'bottom5' ? <AlertCircle size={18} /> : <BarChart3 size={18} />}
                     </div>
                     <div>
                       <h4 className="text-sm font-extrabold font-mono uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
-                        <span>TOP 5 PERINGKAT TERATAS MANPOWER</span>
+                        <span>{leaderboardTab === 'top5' ? 'TOP 5 PERINGKAT TERATAS' : leaderboardTab === 'bottom5' ? '5 PERINGKAT TERBAWAH' : 'KOMPARASI TOP VS BOTTOM'}</span>
                       </h4>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">
-                        Produktivitas flat-rate &amp; efisiensi tertinggi workshop bulan ini
+                        {leaderboardTab === 'top5'
+                          ? 'Performa & efisiensi flat-rate tertinggi bulan ini'
+                          : leaderboardTab === 'bottom5'
+                          ? 'Personil yang membutuhkan evaluasi pembinaan & OJT'
+                          : 'Perbandingan performa 5 teratas vs 5 terbawah'}
                       </p>
                     </div>
                   </div>
 
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                    Leaderboard
-                  </span>
+                  {/* Switcher: Top 5 / Bottom 5 / Both */}
+                  <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-mono font-bold gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setLeaderboardTab('top5')}
+                      className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
+                        leaderboardTab === 'top5'
+                          ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
+                          : 'text-slate-700 dark:text-slate-300 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>🏆 5 Teratas</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLeaderboardTab('bottom5')}
+                      className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
+                        leaderboardTab === 'bottom5'
+                          ? 'bg-rose-600 text-white font-black shadow-xs'
+                          : 'text-slate-700 dark:text-slate-300 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>⚠️ 5 Terbawah</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLeaderboardTab('both')}
+                      className={`px-2 py-1 rounded-lg transition-all cursor-pointer ${
+                        leaderboardTab === 'both'
+                          ? 'bg-blue-600 text-white font-black shadow-xs'
+                          : 'text-slate-700 dark:text-slate-300 hover:text-slate-900'
+                      }`}
+                      title="Bandingkan Kedua Kategori"
+                    >
+                      <span>Komparasi</span>
+                    </button>
+                  </div>
                 </div>
 
-                {/* TOP 5 Cards */}
-                <div className="space-y-2.5">
-                  {manpowerStats.top5.map((performer, rankIdx) => {
-                    const isRank1 = rankIdx === 0;
-                    const isRank2 = rankIdx === 1;
-                    const isRank3 = rankIdx === 2;
-                    const hoursDiff = performer.flatRateHoursEarned - performer.actualWorkHours;
+                {/* TAB VIEW 1: TOP 5 CARDS */}
+                {leaderboardTab === 'top5' && (
+                  <div className="space-y-2.5 max-h-[440px] overflow-y-auto pr-0.5">
+                    {manpowerStats.top5.map((performer, rankIdx) => {
+                      const isRank1 = rankIdx === 0;
+                      const isRank2 = rankIdx === 1;
+                      const isRank3 = rankIdx === 2;
+                      const hoursDiff = performer.flatRateHoursEarned - performer.actualWorkHours;
 
-                    return (
-                      <div
-                        key={performer.id}
-                        className={`p-3 rounded-xl border transition-all ${
-                          isRank1
-                            ? 'border-amber-400 dark:border-amber-500/80 bg-gradient-to-r from-amber-50/80 via-amber-50/40 to-white dark:from-amber-950/40 dark:via-amber-950/20 dark:to-slate-900 shadow-sm'
-                            : isRank2
-                            ? 'border-slate-300 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40'
-                            : isRank3
-                            ? 'border-amber-700/40 dark:border-amber-800/50 bg-amber-900/5 dark:bg-amber-950/20'
-                            : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          {/* Rank Icon & Identity */}
-                          <div className="flex items-start gap-2.5">
-                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-mono font-black text-sm shrink-0 ${
-                              isRank1
-                                ? 'bg-amber-400 text-slate-950 shadow-xs ring-2 ring-amber-400/50'
-                                : isRank2
-                                ? 'bg-slate-300 text-slate-900'
-                                : isRank3
-                                ? 'bg-amber-700 text-white'
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                            }`}>
-                              {isRank1 ? '🥇' : isRank2 ? '🥈' : isRank3 ? '🥉' : `#${rankIdx + 1}`}
-                            </div>
+                      return (
+                        <div
+                          key={performer.id}
+                          className={`p-3 rounded-xl border transition-all ${
+                            isRank1
+                              ? 'border-amber-400 dark:border-amber-500/80 bg-gradient-to-r from-amber-50/80 via-amber-50/40 to-white dark:from-amber-950/40 dark:via-amber-950/20 dark:to-slate-900 shadow-sm'
+                              : isRank2
+                              ? 'border-slate-300 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40'
+                              : isRank3
+                              ? 'border-amber-700/40 dark:border-amber-800/50 bg-amber-900/5 dark:bg-amber-950/20'
+                              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            {/* Rank Icon & Identity */}
+                            <div className="flex items-start gap-2.5">
+                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-mono font-black text-sm shrink-0 ${
+                                isRank1
+                                  ? 'bg-amber-400 text-slate-950 shadow-xs ring-2 ring-amber-400/50'
+                                  : isRank2
+                                  ? 'bg-slate-300 text-slate-900'
+                                  : isRank3
+                                  ? 'bg-amber-700 text-white'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                              }`}>
+                                {isRank1 ? '🥇' : isRank2 ? '🥈' : isRank3 ? '🥉' : `#${rankIdx + 1}`}
+                              </div>
 
-                            <div className="space-y-0.5">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <h5 className="text-xs font-black font-mono text-slate-900 dark:text-white">
-                                  {performer.name}
-                                </h5>
-                                {isRank1 && (
-                                  <span className="text-[9px] font-mono font-black px-1.5 py-0.2 rounded bg-amber-500 text-slate-950 uppercase tracking-wider">
-                                    TOP 1
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <h5 className="text-xs font-black font-mono text-slate-900 dark:text-white">
+                                    {performer.name}
+                                  </h5>
+                                  {isRank1 && (
+                                    <span className="text-[9px] font-mono font-black px-1.5 py-0.2 rounded bg-amber-500 text-slate-950 uppercase tracking-wider">
+                                      TOP 1
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-500 flex-wrap">
+                                  <span className="font-semibold text-slate-700 dark:text-slate-300">
+                                    {performer.role}
                                   </span>
-                                )}
-                              </div>
-
-                              <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-500 flex-wrap">
-                                <span className="font-semibold text-slate-700 dark:text-slate-300">
-                                  {performer.role}
-                                </span>
-                                <span>&bull;</span>
-                                <span className="text-blue-600 dark:text-blue-400 font-medium">
-                                  {performer.skillLevel}
-                                </span>
-                                <span>&bull;</span>
-                                <span className="text-slate-400">NRP: {performer.nrp}</span>
+                                  <span>&bull;</span>
+                                  <span className="text-blue-600 dark:text-blue-400 font-medium">
+                                    {performer.skillLevel}
+                                  </span>
+                                  <span>&bull;</span>
+                                  <span className="text-slate-400">NRP: {performer.nrp}</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
 
-                          {/* Efficiency Score KPI */}
-                          <div className="text-right shrink-0">
-                            <div className="text-base font-black font-mono text-emerald-600 dark:text-emerald-400">
-                              {performer.efficiencyRatio}%
-                            </div>
-                            <span className="text-[9px] font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 px-1.5 py-0.5 rounded">
-                              +{hoursDiff} Jam Hemat
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Metrics Bar: Flat vs Actual & Jobs Done */}
-                        <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[10px] font-mono">
-                          <div className="flex items-center gap-2 text-slate-500">
-                            <span>Flat: <strong className="text-slate-900 dark:text-white">{performer.flatRateHoursEarned}h</strong></span>
-                            <span>&bull;</span>
-                            <span>Fisik: <strong className="text-slate-900 dark:text-white">{performer.actualWorkHours}h</strong></span>
-                            <span>&bull;</span>
-                            <span>WO: <strong className="text-blue-600 dark:text-blue-400">{performer.completedJobsCount}</strong></span>
-                          </div>
-
-                          <div className="flex items-center gap-1">
-                            <span className={`w-1.5 h-1.5 rounded-full ${
-                              performer.status === 'In Job' ? 'bg-blue-500' : 'bg-emerald-500'
-                            }`}></span>
-                            <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">
-                              {performer.status}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Top Specialization Tag */}
-                        {performer.specialties && performer.specialties.length > 0 && (
-                          <div className="mt-1.5 flex items-center gap-1 flex-wrap">
-                            <span className="text-[9px] font-mono text-slate-400">Spesialisasi:</span>
-                            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                              {performer.specialties[0]}
-                            </span>
-                            {performer.specialties[1] && (
-                              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                                {performer.specialties[1]}
+                            {/* Efficiency Score KPI */}
+                            <div className="text-right shrink-0">
+                              <div className="text-base font-black font-mono text-emerald-600 dark:text-emerald-400">
+                                {performer.efficiencyRatio}%
+                              </div>
+                              <span className="text-[9px] font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 px-1.5 py-0.5 rounded">
+                                +{hoursDiff} Jam Hemat
                               </span>
-                            )}
+                            </div>
                           </div>
-                        )}
+
+                          {/* Metrics Bar: Flat vs Actual & Jobs Done */}
+                          <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[10px] font-mono">
+                            <div className="flex items-center gap-2 text-slate-500">
+                              <span>Flat: <strong className="text-slate-900 dark:text-white">{performer.flatRateHoursEarned}h</strong></span>
+                              <span>&bull;</span>
+                              <span>Fisik: <strong className="text-slate-900 dark:text-white">{performer.actualWorkHours}h</strong></span>
+                              <span>&bull;</span>
+                              <span>WO: <strong className="text-blue-600 dark:text-blue-400">{performer.completedJobsCount}</strong></span>
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                              <span className={`w-1.5 h-1.5 rounded-full ${
+                                performer.status === 'In Job' ? 'bg-blue-500' : 'bg-emerald-500'
+                              }`}></span>
+                              <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">
+                                {performer.status}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Top Specialization Tag */}
+                          {performer.specialties && performer.specialties.length > 0 && (
+                            <div className="mt-1.5 flex items-center gap-1 flex-wrap">
+                              <span className="text-[9px] font-mono text-slate-400">Spesialisasi:</span>
+                              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                {performer.specialties[0]}
+                              </span>
+                              {performer.specialties[1] && (
+                                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                  {performer.specialties[1]}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* TAB VIEW 2: 5 TERBAWAH CARDS (PERLU EVALUASI & COACHING) */}
+                {leaderboardTab === 'bottom5' && (
+                  <div className="space-y-2.5 max-h-[440px] overflow-y-auto pr-0.5">
+                    {/* Notice Banner */}
+                    <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 flex items-start gap-2 text-xs font-sans text-amber-900 dark:text-amber-200">
+                      <AlertCircle size={15} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                      <div>
+                        <strong>Catatan Supervisi:</strong> Personil dalam daftar ini memerlukan evaluasi alur kerja, pendampingan Senior Teknisi (OJT), atau pemeriksaan kendala waktu tunggu suku cadang/tooling.
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+
+                    {manpowerStats.bottom5.map((performer, rankIdx) => {
+                      const isLowest = rankIdx === 0;
+                      const isBelow100 = performer.efficiencyRatio < 100;
+                      const hoursDiff = performer.flatRateHoursEarned - performer.actualWorkHours;
+
+                      // Contextual coaching action notes based on person role/data
+                      const coachingNotes = [
+                        'Asistensi SOP pembongkaran & penggunaan SST untuk teknisi junior',
+                        'Investigasi kendala baut patah & waktu tunggu suku cadang di Bay',
+                        'Optimalisasi rotasi pekerjaan tyre replacement di area pit mobile',
+                        'Pelatihan penelusuran skema kelistrikan 24V & kalibrasi sensor',
+                        'Peningkatan kecepatan overhaul gearbox transmisi alat berat'
+                      ];
+                      const specificNote = coachingNotes[rankIdx % coachingNotes.length];
+
+                      return (
+                        <div
+                          key={performer.id}
+                          className={`p-3 rounded-xl border transition-all ${
+                            isLowest
+                              ? 'border-rose-400 dark:border-rose-500/80 bg-gradient-to-r from-rose-50/80 via-rose-50/30 to-white dark:from-rose-950/40 dark:via-rose-950/20 dark:to-slate-900 shadow-sm'
+                              : isBelow100
+                              ? 'border-rose-200 dark:border-rose-800/80 bg-rose-50/40 dark:bg-rose-950/20'
+                              : 'border-amber-200 dark:border-amber-800/70 bg-amber-50/30 dark:bg-amber-950/10'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            {/* Rank Icon & Identity */}
+                            <div className="flex items-start gap-2.5">
+                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-mono font-black text-xs shrink-0 ${
+                                isLowest
+                                  ? 'bg-rose-600 text-white shadow-xs ring-2 ring-rose-400/50'
+                                  : isBelow100
+                                  ? 'bg-rose-500 text-white'
+                                  : 'bg-amber-500 text-slate-950'
+                              }`}>
+                                🔻{rankIdx + 1}
+                              </div>
+
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <h5 className="text-xs font-black font-mono text-slate-900 dark:text-white">
+                                    {performer.name}
+                                  </h5>
+                                  <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded uppercase ${
+                                    isBelow100
+                                      ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                                      : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                                  }`}>
+                                    {isBelow100 ? 'Perlu OJT' : 'Review Kecepatan'}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-500 flex-wrap">
+                                  <span className="font-semibold text-slate-700 dark:text-slate-300">
+                                    {performer.role}
+                                  </span>
+                                  <span>&bull;</span>
+                                  <span className="text-blue-600 dark:text-blue-400 font-medium">
+                                    {performer.skillLevel}
+                                  </span>
+                                  <span>&bull;</span>
+                                  <span className="text-slate-400">NRP: {performer.nrp}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Efficiency Score KPI */}
+                            <div className="text-right shrink-0">
+                              <div className={`text-base font-black font-mono ${
+                                isBelow100 ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400'
+                              }`}>
+                                {performer.efficiencyRatio}%
+                              </div>
+                              <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                                hoursDiff < 0
+                                  ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                                  : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                              }`}>
+                                {hoursDiff < 0 ? `${hoursDiff} Jam Defisit` : `+${hoursDiff} Jam`}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Detail Kendala & Rekomendasi Coaching */}
+                          <div className="mt-2 p-2 rounded-lg bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-[10px] font-sans text-slate-700 dark:text-slate-300">
+                            <span className="font-bold text-slate-900 dark:text-white">Rencana Pembinaan: </span>
+                            <span>{specificNote}</span>
+                          </div>
+
+                          {/* Metrics Bar: Flat vs Actual & Jobs Done */}
+                          <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between text-[10px] font-mono">
+                            <div className="flex items-center gap-2 text-slate-500">
+                              <span>Flat: <strong className="text-slate-900 dark:text-white">{performer.flatRateHoursEarned}h</strong></span>
+                              <span>&bull;</span>
+                              <span>Fisik: <strong className="text-slate-900 dark:text-white">{performer.actualWorkHours}h</strong></span>
+                              <span>&bull;</span>
+                              <span>WO: <strong className="text-blue-600 dark:text-blue-400">{performer.completedJobsCount}</strong></span>
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                              <span className={`w-1.5 h-1.5 rounded-full ${
+                                performer.status === 'In Job' ? 'bg-blue-500' : 'bg-emerald-500'
+                              }`}></span>
+                              <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">
+                                {performer.status}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* TAB VIEW 3: KOMPARASI KEDUA KELOMPOK (BOTH) */}
+                {leaderboardTab === 'both' && (
+                  <div className="space-y-3 max-h-[440px] overflow-y-auto pr-0.5">
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Top 5 Column */}
+                      <div className="space-y-2 p-3 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-black font-mono text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
+                            <Trophy size={13} />
+                            <span>5 TERATAS</span>
+                          </span>
+                          <span className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                            {manpowerStats.top5AvgEff}%
+                          </span>
+                        </div>
+                        <div className="space-y-1.5 text-xs font-mono">
+                          {manpowerStats.top5.map((p, idx) => (
+                            <div key={p.id} className="flex items-center justify-between p-1.5 rounded bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-[11px]">
+                              <span className="truncate max-w-[90px] font-bold text-slate-800 dark:text-slate-200">
+                                #{idx + 1} {p.name.split(' ')[0]}
+                              </span>
+                              <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                {p.efficiencyRatio}%
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Bottom 5 Column */}
+                      <div className="space-y-2 p-3 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-black font-mono text-rose-800 dark:text-rose-300 flex items-center gap-1">
+                            <AlertCircle size={13} />
+                            <span>5 TERBAWAH</span>
+                          </span>
+                          <span className="text-xs font-mono font-bold text-rose-700 dark:text-rose-400">
+                            {manpowerStats.bottom5AvgEff}%
+                          </span>
+                        </div>
+                        <div className="space-y-1.5 text-xs font-mono">
+                          {manpowerStats.bottom5.map((p, idx) => (
+                            <div key={p.id} className="flex items-center justify-between p-1.5 rounded bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-[11px]">
+                              <span className="truncate max-w-[90px] font-bold text-slate-800 dark:text-slate-200">
+                                🔻{idx + 1} {p.name.split(' ')[0]}
+                              </span>
+                              <span className={`font-mono font-bold ${
+                                p.efficiencyRatio < 100 ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400'
+                              }`}>
+                                {p.efficiencyRatio}%
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Summary Gap Insight Box */}
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 space-y-1.5 text-xs font-mono">
+                      <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                        <span>Total Jam Flat Rate:</span>
+                        <span>Top 5: <strong className="text-emerald-600">{manpowerStats.top5TotalFlat}h</strong> vs Bottom 5: <strong className="text-rose-600">{manpowerStats.bottom5TotalFlat}h</strong></span>
+                      </div>
+                      <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                        <span>Selisih Surplus Jam:</span>
+                        <span>Top 5: <strong className="text-emerald-600">+{manpowerStats.top5Surplus}h</strong> vs Bottom 5: <strong className="text-rose-600">{manpowerStats.bottom5Surplus >= 0 ? `+${manpowerStats.bottom5Surplus}` : manpowerStats.bottom5Surplus}h</strong></span>
+                      </div>
+                      <div className="pt-1.5 border-t border-slate-200 dark:border-slate-800 flex justify-between font-bold text-slate-900 dark:text-white">
+                        <span>Gap Efisiensi Kerja:</span>
+                        <span className="text-blue-600 dark:text-blue-400">{manpowerStats.efficiencyGap}% Deviasi</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Leaderboard Action Footer */}
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <span className="text-xs text-slate-400 font-mono">
-                  {manpowerStats.totalStaff} Personil Workshop Terdaftar
+                <span className="text-xs text-slate-500 font-mono">
+                  {manpowerStats.totalStaff} Personil Terdaftar
                 </span>
                 <button
                   type="button"
