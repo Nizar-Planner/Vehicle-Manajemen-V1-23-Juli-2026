@@ -7,7 +7,7 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import { createServer as createViteServer } from "vite";
-import type { UioUnit, SparePart, WorkshopBooking, BreakdownLog, RepairHistory, DashboardStats, MechanicInspection, UnitDispatchLog } from "./src/types";
+import type { UioUnit, SparePart, WorkshopBooking, BreakdownLog, RepairHistory, DashboardStats, MechanicInspection, UnitDispatchLog, ManpowerPerson, ManpowerTaskLog } from "./src/types";
 const PORT = 3000;
 const DB_FILE = path.join(process.cwd(), "db_fleetcare.json");
 
@@ -593,7 +593,384 @@ const generateId = (prefix: string) => `${prefix}-${Math.random().toString(36).s
 
   const dispatchLogs: UnitDispatchLog[] = [];
 
-  return { uioUnits, spareParts, bookings, breakdowns, repairs, hmLogs, mechanics, appUsers, appSettings, inspections, dispatchLogs };
+  const manpower: ManpowerPerson[] = [
+    {
+      id: "MP-001",
+      nrp: "NRP-72019",
+      name: "Bambang Suherman",
+      role: "Foreman",
+      skillLevel: "Lead",
+      phone: "+62 812-4433-2101",
+      email: "bambang.foreman@fleetcare.id",
+      shift: "Shift 1 (Pagi)",
+      status: "On Duty",
+      assignedBay: "Bay 1 & Bay 2 (Workshop Utama)",
+      activeJob: {
+        workOrderId: "B-001",
+        unitCode: "DUMP-06",
+        unitName: "Hino Ranger Dump Hauler",
+        jobType: "Supervisi Overhaul Gearbox Transmisi",
+        bay: "Bay 1",
+        startTime: "2026-09-22 08:30",
+        targetHours: 6.0
+      },
+      standardMonthlyHours: 173,
+      actualWorkHours: 162,
+      flatRateHoursEarned: 181,
+      efficiencyRatio: 111.7,
+      utilizationRate: 93.6,
+      completedJobsCount: 28,
+      specialties: ["Supervisi Heavy Equipment", "Troubleshooting Powertrain", "Safety POP K3"],
+      certifications: ["Pengawas Operasional Pertama (POP) ESDM", "Komatsu Heavy Master Certified", "ISO 45001 K3"],
+      joinedDate: "2019-03-15",
+      rating: 4.9,
+      notes: "Foreman workshop utama, disiplin tinggi dan rekam jejak zero accident."
+    },
+    {
+      id: "MP-002",
+      nrp: "NRP-72045",
+      name: "Agus Priyanto",
+      role: "Foreman",
+      skillLevel: "Senior",
+      phone: "+62 813-8899-7711",
+      email: "agus.priyanto@fleetcare.id",
+      shift: "Shift 2 (Malam)",
+      status: "Standby",
+      assignedBay: "Dispatch & Field Quick Response",
+      activeJob: null,
+      standardMonthlyHours: 173,
+      actualWorkHours: 158,
+      flatRateHoursEarned: 167,
+      efficiencyRatio: 105.7,
+      utilizationRate: 91.3,
+      completedJobsCount: 22,
+      specialties: ["Night Shift Breakdown Dispatch", "Quick Diagnostic", "Emergency Recovery"],
+      certifications: ["POP Pertambangan", "First Aid Responder", "Heavy Towing Operator"],
+      joinedDate: "2020-07-01",
+      rating: 4.8,
+      notes: "Pengawas shift malam tanggap darurat unit breakdown di pit."
+    },
+    {
+      id: "MP-003",
+      nrp: "NRP-81014",
+      name: "Suryadi",
+      role: "Mekanik",
+      skillLevel: "Senior",
+      phone: "+62 821-5566-3322",
+      email: "suryadi.mech@fleetcare.id",
+      shift: "Shift 1 (Pagi)",
+      status: "In Job",
+      assignedBay: "Bay 1 (Heavy Repair)",
+      activeJob: {
+        workOrderId: "B-001",
+        unitCode: "DUMP-06",
+        unitName: "Hino Ranger FM 260 JD",
+        jobType: "Overhaul Gearbox Gigi 3 & Kampas Kopling",
+        bay: "Bay 1",
+        startTime: "2026-09-22 09:00",
+        targetHours: 6.0
+      },
+      standardMonthlyHours: 173,
+      actualWorkHours: 165,
+      flatRateHoursEarned: 179,
+      efficiencyRatio: 108.5,
+      utilizationRate: 95.4,
+      completedJobsCount: 24,
+      specialties: ["Engine CAT & Cummins", "Transmisi Heavy Hauler", "Fuel System Common Rail"],
+      certifications: ["Caterpillar 320D Master Technician", "Hino Heavy Duty Certified"],
+      joinedDate: "2018-05-10",
+      rating: 4.9,
+      notes: "Mekanik andalan untuk engine dan transmisi alat berat."
+    },
+    {
+      id: "MP-004",
+      nrp: "NRP-81033",
+      name: "Herianto",
+      role: "Mekanik",
+      skillLevel: "Senior",
+      phone: "+62 822-7788-9900",
+      email: "herianto.hyd@fleetcare.id",
+      shift: "Shift 1 (Pagi)",
+      status: "In Job",
+      assignedBay: "Bay 2 (Service PM)",
+      activeJob: {
+        workOrderId: "B-003",
+        unitCode: "EXCA-01",
+        unitName: "Caterpillar 320D Excavator",
+        jobType: "Penggantian Seal Kit Cylinder Boom & Flush Hidrolik",
+        bay: "Bay 2",
+        startTime: "2026-09-22 10:15",
+        targetHours: 4.0
+      },
+      standardMonthlyHours: 173,
+      actualWorkHours: 160,
+      flatRateHoursEarned: 171,
+      efficiencyRatio: 106.9,
+      utilizationRate: 92.5,
+      completedJobsCount: 21,
+      specialties: ["Hidrolik & Main Pump", "Cylinder Reseal", "Undercarriage Alignment"],
+      certifications: ["Hydraulics Pro Level 3", "Komatsu Undercarriage Specialist"],
+      joinedDate: "2019-11-20",
+      rating: 4.8,
+      notes: "Spesialis kebocoran oli hidrolik dan perakitan valve bank."
+    },
+    {
+      id: "MP-005",
+      nrp: "NRP-81056",
+      name: "Joko Susilo",
+      role: "Mekanik",
+      skillLevel: "Senior",
+      phone: "+62 813-1122-3344",
+      email: "joko.susilo@fleetcare.id",
+      shift: "Shift 1 (Pagi)",
+      status: "On Duty",
+      assignedBay: "Bay 3 (Light Vehicle & Aux)",
+      activeJob: null,
+      standardMonthlyHours: 173,
+      actualWorkHours: 154,
+      flatRateHoursEarned: 157,
+      efficiencyRatio: 101.9,
+      utilizationRate: 89.0,
+      completedJobsCount: 19,
+      specialties: ["Brake System Pneumatic", "Suspensi & Propeller Shaft", "Servis Berkala 250 HM"],
+      certifications: ["Brake Air System Certified", "Heavy Vehicle Inspection"],
+      joinedDate: "2021-02-14",
+      rating: 4.7,
+      notes: "Terampil penanganan cepat rem dan servis berkala armada LV & Dump Truck."
+    },
+    {
+      id: "MP-006",
+      nrp: "NRP-81088",
+      name: "Dedi Kurniawan",
+      role: "Auto-Electrician",
+      skillLevel: "Spesialis",
+      phone: "+62 852-6677-8899",
+      email: "dedi.electric@fleetcare.id",
+      shift: "Shift 1 (Pagi)",
+      status: "In Job",
+      assignedBay: "Bay 3 (Electrical & AC)",
+      activeJob: {
+        workOrderId: "B-004",
+        unitCode: "BULL-02",
+        unitName: "Komatsu D85ESS-2 Dozer",
+        jobType: "Troubleshooting Wiring Harness 24V & Starter Motor",
+        bay: "Bay 3",
+        startTime: "2026-09-22 11:00",
+        targetHours: 3.5
+      },
+      standardMonthlyHours: 173,
+      actualWorkHours: 161,
+      flatRateHoursEarned: 178,
+      efficiencyRatio: 110.6,
+      utilizationRate: 93.1,
+      completedJobsCount: 26,
+      specialties: ["Wiring Harness 24V Heavy Duty", "Alternator & Starter Repair", "ECM Scanner Diagnostic"],
+      certifications: ["Auto-Electrician Specialist Level 3", "Electronic Technician ET CAT"],
+      joinedDate: "2020-04-18",
+      rating: 4.9,
+      notes: "Spesialis kelistrikan alat berat dan kalibrasi sensor ECU."
+    },
+    {
+      id: "MP-007",
+      nrp: "NRP-85012",
+      name: "Hendra Saputra",
+      role: "Tireman",
+      skillLevel: "Lead",
+      phone: "+62 812-9900-1122",
+      email: "hendra.tireman@fleetcare.id",
+      shift: "Shift 1 (Pagi)",
+      status: "In Job",
+      assignedBay: "Tire Bay & OTR Area",
+      activeJob: {
+        workOrderId: "B-005",
+        unitCode: "DUMP-05",
+        unitName: "Hino Ranger FM 260 JD",
+        jobType: "Penggantian Ban Belakang Kiri & Rotasi Ban OTR",
+        bay: "Tire Bay",
+        startTime: "2026-09-22 09:30",
+        targetHours: 3.0
+      },
+      standardMonthlyHours: 173,
+      actualWorkHours: 166,
+      flatRateHoursEarned: 177,
+      efficiencyRatio: 106.6,
+      utilizationRate: 96.0,
+      completedJobsCount: 34,
+      specialties: ["OTR Tyre Replacement", "Tyre Inflation Safety Cage", "Wheel Rim Crack Inspection"],
+      certifications: ["TIA Earthmover Tire Service Specialist", "Heavy Rim Safety Handling"],
+      joinedDate: "2019-08-25",
+      rating: 4.8,
+      notes: "Lead tireman, ahli manajemen tekanan ban OTR dan rotasi haul road."
+    },
+    {
+      id: "MP-008",
+      nrp: "NRP-85044",
+      name: "Wahyu Pratama",
+      role: "Tireman",
+      skillLevel: "Junior",
+      phone: "+62 813-7766-5544",
+      email: "wahyu.tireman@fleetcare.id",
+      shift: "Shift 1 (Pagi)",
+      status: "In Job",
+      assignedBay: "Tire Bay & OTR Area",
+      activeJob: {
+        workOrderId: "B-005",
+        unitCode: "DUMP-05",
+        unitName: "Hino Ranger FM 260 JD",
+        jobType: "Asistensi Penggantian Ban Belakang & Pengecekan Torsi Baut",
+        bay: "Tire Bay",
+        startTime: "2026-09-22 09:30",
+        targetHours: 3.0
+      },
+      standardMonthlyHours: 173,
+      actualWorkHours: 159,
+      flatRateHoursEarned: 163,
+      efficiencyRatio: 102.5,
+      utilizationRate: 91.9,
+      completedJobsCount: 31,
+      specialties: ["Torque Wrench Calibration", "Tyre Pressure Monitoring TPMS", "Penyimpanan Ban"],
+      certifications: ["Basic Tire OTR Safety", "Pneumatic Tools Operator"],
+      joinedDate: "2022-06-10",
+      rating: 4.6,
+      notes: "Tireman cekatan, bertanggung jawab atas checklist tekanan ban harian armada."
+    },
+    {
+      id: "MP-009",
+      nrp: "NRP-92011",
+      name: "M. Arif",
+      role: "Helper",
+      skillLevel: "Senior",
+      phone: "+62 823-3344-5566",
+      email: "arif.helper@fleetcare.id",
+      shift: "Shift 1 (Pagi)",
+      status: "In Job",
+      assignedBay: "Bay 1 (Heavy Repair)",
+      activeJob: {
+        workOrderId: "B-001",
+        unitCode: "DUMP-06",
+        unitName: "Hino Ranger FM 260 JD",
+        jobType: "Pencucian Komponen Gearbox, Drain Oli & Penyiapan Tools",
+        bay: "Bay 1",
+        startTime: "2026-09-22 09:00",
+        targetHours: 6.0
+      },
+      standardMonthlyHours: 173,
+      actualWorkHours: 167,
+      flatRateHoursEarned: 162,
+      efficiencyRatio: 97.0,
+      utilizationRate: 96.5,
+      completedJobsCount: 29,
+      specialties: ["Tool Room Keeper", "Pembersihan Parts & Degreasing", "Asistensi Servis Berkala"],
+      certifications: ["Safety Housekeeping 5R", "Chemical Handling & APD"],
+      joinedDate: "2021-09-01",
+      rating: 4.7,
+      notes: "Helper mekanik gesit, sangat teliti dalam merapikan special service tools (SST)."
+    },
+    {
+      id: "MP-010",
+      nrp: "NRP-92034",
+      name: "Fajar Rizky",
+      role: "Helper",
+      skillLevel: "Junior",
+      phone: "+62 856-4433-2211",
+      email: "fajar.helper@fleetcare.id",
+      shift: "Shift 2 (Malam)",
+      status: "Roster Off",
+      assignedBay: "Workshop Lapangan Pit Barat",
+      activeJob: null,
+      standardMonthlyHours: 173,
+      actualWorkHours: 152,
+      flatRateHoursEarned: 145,
+      efficiencyRatio: 95.4,
+      utilizationRate: 87.9,
+      completedJobsCount: 20,
+      specialties: ["Lube Bay Assistance", "Oil Dispensing Drum", "Pengecekan Level Fluida"],
+      certifications: ["Basic Safety Mining", "Hazard Identification"],
+      joinedDate: "2023-01-15",
+      rating: 4.5,
+      notes: "Sedang periode roster off 2 hari setelah giliran shift malam."
+    }
+  ];
+
+  const manpowerTasks: ManpowerTaskLog[] = [
+    {
+      id: "TSK-001",
+      personId: "MP-003",
+      personName: "Suryadi",
+      role: "Mekanik",
+      unitCode: "LV-09",
+      taskTitle: "Servis Berkala 40.000 KM & Kalibrasi Rem Depan",
+      category: "Preventive Maintenance",
+      completedAt: "2026-09-20 15:30",
+      actualHours: 3.5,
+      flatRateHours: 4.0,
+      efficiencyScore: 114.3,
+      status: "Completed",
+      notes: "Pekerjaan selesai lebih cepat dari standar flat-rate, rem berfungsi optimal."
+    },
+    {
+      id: "TSK-002",
+      personId: "MP-004",
+      personName: "Herianto",
+      role: "Mekanik",
+      unitCode: "LOAD-01",
+      taskTitle: "Penggantian Oli Hidrolik & Filter Return 250 HM",
+      category: "Preventive Maintenance",
+      completedAt: "2026-09-21 11:45",
+      actualHours: 2.0,
+      flatRateHours: 2.0,
+      efficiencyScore: 100.0,
+      status: "Completed",
+      notes: "Sesuai jadwal SOP tanpa kendala teknis."
+    },
+    {
+      id: "TSK-003",
+      personId: "MP-007",
+      personName: "Hendra Saputra",
+      role: "Tireman",
+      unitCode: "DUMP-05",
+      taskTitle: "Pemasangan Ban Baru OTR Posisi 3 & Balancing",
+      category: "Tire Management",
+      completedAt: "2026-09-21 14:15",
+      actualHours: 2.2,
+      flatRateHours: 2.5,
+      efficiencyScore: 113.6,
+      status: "Completed",
+      notes: "Pengecekan rim dan mur roda dengan torque wrench terkalibrasi."
+    },
+    {
+      id: "TSK-004",
+      personId: "MP-006",
+      personName: "Dedi Kurniawan",
+      role: "Auto-Electrician",
+      unitCode: "EXCA-01",
+      taskTitle: "Perbaikan Alternator 24V & Penggantian Relay Starter",
+      category: "Breakdown / Corrective",
+      completedAt: "2026-09-21 16:40",
+      actualHours: 2.8,
+      flatRateHours: 3.0,
+      efficiencyScore: 107.1,
+      status: "Completed",
+      notes: "Arus pengisian baterai normal 28.2V saat engine running."
+    },
+    {
+      id: "TSK-005",
+      personId: "MP-009",
+      personName: "M. Arif",
+      role: "Helper",
+      unitCode: "BULL-02",
+      taskTitle: "Asistensi Drain Oli Transmisi & Pembersihan Radiator",
+      category: "Preventive Maintenance",
+      completedAt: "2026-09-20 17:00",
+      actualHours: 4.0,
+      flatRateHours: 4.0,
+      efficiencyScore: 100.0,
+      status: "Completed",
+      notes: "Membantu mekanik utama mencuci part dan membersihkan area bay."
+    }
+  ];
+
+  return { uioUnits, spareParts, bookings, breakdowns, repairs, hmLogs, mechanics, appUsers, appSettings, inspections, dispatchLogs, manpower, manpowerTasks };
 };
 
 // Database state
@@ -669,6 +1046,12 @@ const loadDatabase = () => {
       }
       if (!db.appSettings) {
         db.appSettings = getInitialData().appSettings;
+      }
+      if (!db.manpower || db.manpower.length === 0) {
+        db.manpower = getInitialData().manpower;
+      }
+      if (!db.manpowerTasks || db.manpowerTasks.length === 0) {
+        db.manpowerTasks = getInitialData().manpowerTasks;
       }
       console.log("Database loaded successfully from:", DB_FILE);
     } else {
@@ -2035,6 +2418,256 @@ app.post("/api/bookings/:id/assign-foreman", (req, res) => {
 
   saveDatabase();
   res.json(booking);
+});
+
+// ====================================================
+// MANPOWER MANAGEMENT & PRODUCTIVITY TRACKING API
+// ====================================================
+
+// 1. Get all manpower personnel and task history
+app.get("/api/manpower", (req, res) => {
+  if (!db.manpower) db.manpower = [];
+  if (!db.manpowerTasks) db.manpowerTasks = [];
+  res.json({
+    personnel: db.manpower,
+    tasks: db.manpowerTasks
+  });
+});
+
+// 2. Create new personnel
+app.post("/api/manpower", (req, res) => {
+  try {
+    const { name, role, skillLevel, phone, email, shift, status, assignedBay, specialties, certifications, joinedDate, notes } = req.body;
+    
+    if (!name || !role) {
+      return res.status(400).json({ error: "Nama dan Role wajib diisi" });
+    }
+
+    const newPerson: ManpowerPerson = {
+      id: generateId("MP"),
+      nrp: req.body.nrp || `NRP-${Math.floor(10000 + Math.random() * 90000)}`,
+      name: name.trim(),
+      role: role || "Mekanik",
+      skillLevel: skillLevel || "Senior",
+      phone: phone || "-",
+      email: email || "",
+      shift: shift || "Shift 1 (Pagi)",
+      status: status || "On Duty",
+      assignedBay: assignedBay || "Workshop Utama",
+      activeJob: null,
+      standardMonthlyHours: 173,
+      actualWorkHours: Number(req.body.actualWorkHours) || 0,
+      flatRateHoursEarned: Number(req.body.flatRateHoursEarned) || 0,
+      efficiencyRatio: Number(req.body.efficiencyRatio) || 100.0,
+      utilizationRate: Number(req.body.utilizationRate) || 0.0,
+      completedJobsCount: Number(req.body.completedJobsCount) || 0,
+      specialties: Array.isArray(specialties) ? specialties : (specialties ? [specialties] : []),
+      certifications: Array.isArray(certifications) ? certifications : (certifications ? [certifications] : []),
+      joinedDate: joinedDate || new Date().toISOString().substring(0, 10),
+      rating: Number(req.body.rating) || 5.0,
+      notes: notes || ""
+    };
+
+    if (!db.manpower) db.manpower = [];
+    db.manpower.push(newPerson);
+    saveDatabase();
+
+    res.status(201).json(newPerson);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Gagal menambahkan personil manpower" });
+  }
+});
+
+// 3. Update personnel profile & status
+app.put("/api/manpower/:id", (req, res) => {
+  const { id } = req.params;
+  const person = (db.manpower || []).find(p => p.id === id);
+  if (!person) {
+    return res.status(404).json({ error: "Personil tidak ditemukan" });
+  }
+
+  const allowedFields = [
+    'name', 'nrp', 'role', 'skillLevel', 'phone', 'email', 
+    'shift', 'status', 'assignedBay', 'activeJob', 'standardMonthlyHours',
+    'actualWorkHours', 'flatRateHoursEarned', 'completedJobsCount',
+    'specialties', 'certifications', 'joinedDate', 'rating', 'notes'
+  ];
+
+  allowedFields.forEach(field => {
+    if (req.body[field] !== undefined) {
+      (person as any)[field] = req.body[field];
+    }
+  });
+
+  // Recalculate metrics
+  if (person.actualWorkHours > 0) {
+    person.efficiencyRatio = Number(((person.flatRateHoursEarned / person.actualWorkHours) * 100).toFixed(1));
+  }
+  const stdHours = person.standardMonthlyHours || 173;
+  person.utilizationRate = Number(((person.actualWorkHours / stdHours) * 100).toFixed(1));
+
+  saveDatabase();
+  res.json(person);
+});
+
+// 4. Delete personnel
+app.delete("/api/manpower/:id", (req, res) => {
+  const { id } = req.params;
+  const initialLength = (db.manpower || []).length;
+  db.manpower = (db.manpower || []).filter(p => p.id !== id);
+
+  if (db.manpower.length === initialLength) {
+    return res.status(404).json({ error: "Personil tidak ditemukan" });
+  }
+
+  saveDatabase();
+  res.json({ success: true, message: "Personil berhasil dihapus" });
+});
+
+// 4b. Bulk Shift Assignment & Attendance Update
+app.post("/api/manpower/bulk-shift", (req, res) => {
+  try {
+    const { personIds, shift, status, assignedBay } = req.body;
+    if (!Array.isArray(personIds) || personIds.length === 0) {
+      return res.status(400).json({ error: "Daftar ID personil tidak valid" });
+    }
+
+    const updated: any[] = [];
+    (db.manpower || []).forEach(p => {
+      if (personIds.includes(p.id)) {
+        if (shift) p.shift = shift;
+        if (status) p.status = status;
+        if (assignedBay) p.assignedBay = assignedBay;
+        updated.push(p);
+      }
+    });
+
+    saveDatabase();
+    res.json({ 
+      success: true, 
+      count: updated.length, 
+      message: `Berhasil memperbarui shift untuk ${updated.length} personil`,
+      updated 
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Gagal memperbarui shift massal" });
+  }
+});
+
+// 4c. Rotate Shifts (Swap Shift 1 Pagi <-> Shift 2 Malam)
+app.post("/api/manpower/rotate-shifts", (req, res) => {
+  try {
+    let rotatedCount = 0;
+    (db.manpower || []).forEach(p => {
+      if (p.shift === "Shift 1 (Pagi)") {
+        p.shift = "Shift 2 (Malam)";
+        rotatedCount++;
+      } else if (p.shift === "Shift 2 (Malam)") {
+        p.shift = "Shift 1 (Pagi)";
+        rotatedCount++;
+      }
+    });
+
+    saveDatabase();
+    res.json({ 
+      success: true, 
+      message: `Rotasi shift berhasil diterapkan untuk ${rotatedCount} personil`, 
+      count: rotatedCount 
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Gagal merotasi shift" });
+  }
+});
+
+// 4d. Update single personnel shift & attendance
+app.put("/api/manpower/:id/attendance", (req, res) => {
+  const { id } = req.params;
+  const { status, shift, assignedBay } = req.body;
+  const person = (db.manpower || []).find(p => p.id === id);
+  if (!person) {
+    return res.status(404).json({ error: "Personil tidak ditemukan" });
+  }
+
+  if (status) person.status = status;
+  if (shift) person.shift = shift;
+  if (assignedBay !== undefined) person.assignedBay = assignedBay;
+
+  saveDatabase();
+  res.json({ success: true, person });
+});
+
+// 5. Assign Job to personnel
+app.post("/api/manpower/:id/assign", (req, res) => {
+  const { id } = req.params;
+  const { workOrderId, unitCode, unitName, jobType, bay, targetHours } = req.body;
+
+  const person = (db.manpower || []).find(p => p.id === id);
+  if (!person) {
+    return res.status(404).json({ error: "Personil tidak ditemukan" });
+  }
+
+  person.status = "In Job";
+  person.activeJob = {
+    workOrderId: workOrderId || "",
+    unitCode: unitCode || "Unit Armada",
+    unitName: unitName || "",
+    jobType: jobType || "Pekerjaan Servis / Perbaikan",
+    bay: bay || person.assignedBay || "Bay 1",
+    startTime: new Date().toISOString().replace("T", " ").substring(0, 16),
+    targetHours: Number(targetHours) || 4.0
+  };
+
+  saveDatabase();
+  res.json(person);
+});
+
+// 6. Complete task for personnel and calculate productivity metrics
+app.post("/api/manpower/:id/complete-task", (req, res) => {
+  const { id } = req.params;
+  const { actualHours, flatRateHours, taskTitle, category, notes, unitCode } = req.body;
+
+  const person = (db.manpower || []).find(p => p.id === id);
+  if (!person) {
+    return res.status(404).json({ error: "Personil tidak ditemukan" });
+  }
+
+  const actHrs = Math.max(0.5, Number(actualHours) || 2.0);
+  const fltHrs = Math.max(0.5, Number(flatRateHours) || actHrs);
+  const effScore = Number(((fltHrs / actHrs) * 100).toFixed(1));
+
+  const uCode = unitCode || (person.activeJob ? person.activeJob.unitCode : "ARMADA");
+  const tTitle = taskTitle || (person.activeJob ? person.activeJob.jobType : "Pekerjaan Servis Lapangan");
+
+  const taskLog: ManpowerTaskLog = {
+    id: generateId("TSK"),
+    personId: person.id,
+    personName: person.name,
+    role: person.role,
+    unitCode: uCode,
+    taskTitle: tTitle,
+    category: category || "Preventive Maintenance",
+    completedAt: new Date().toISOString().replace("T", " ").substring(0, 16),
+    actualHours: actHrs,
+    flatRateHours: fltHrs,
+    efficiencyScore: effScore,
+    status: "Completed",
+    notes: notes || "Pekerjaan selesai dilaksanakan sesuai standar SOP."
+  };
+
+  if (!db.manpowerTasks) db.manpowerTasks = [];
+  db.manpowerTasks.unshift(taskLog);
+
+  // Update Person's cumulative metrics
+  person.actualWorkHours = Number((person.actualWorkHours + actHrs).toFixed(1));
+  person.flatRateHoursEarned = Number((person.flatRateHoursEarned + fltHrs).toFixed(1));
+  person.completedJobsCount += 1;
+  person.efficiencyRatio = Number(((person.flatRateHoursEarned / person.actualWorkHours) * 100).toFixed(1));
+  person.utilizationRate = Number(((person.actualWorkHours / (person.standardMonthlyHours || 173)) * 100).toFixed(1));
+  person.activeJob = null;
+  person.status = "On Duty";
+
+  saveDatabase();
+  res.json({ person, taskLog });
 });
 
 // Vite Dev vs Production Handling

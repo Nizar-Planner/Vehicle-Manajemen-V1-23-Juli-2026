@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Wrench, 
   Package, 
@@ -32,14 +32,22 @@ import {
   Filter,
   PieChart,
   ShieldAlert,
-  Check
+  Check,
+  Users,
+  Award,
+  Trophy,
+  Medal,
+  Star,
+  Zap,
+  HardHat,
+  ArrowUpRight
 } from 'lucide-react';
 import BrandLogo from './BrandLogo';
-import { AppUser, UioUnit, SparePart, RepairHistory, BreakdownLog, WorkshopBooking } from '../types';
+import { AppUser, UioUnit, SparePart, RepairHistory, BreakdownLog, WorkshopBooking, ManpowerPerson } from '../types';
 
 interface ModulePortalProps {
-  onSelectModule: (module: 'maintenance' | 'logistic' | 'purchasing' | 'consultation') => void;
-  onNavigateTab?: (module: 'maintenance' | 'logistic' | 'purchasing' | 'consultation', tab: string) => void;
+  onSelectModule: (module: 'maintenance' | 'logistic' | 'purchasing' | 'consultation' | 'manpower') => void;
+  onNavigateTab?: (module: 'maintenance' | 'logistic' | 'purchasing' | 'consultation' | 'manpower', tab: string) => void;
   onOpenBrandKit?: () => void;
   stats?: {
     totalUnits: number;
@@ -53,8 +61,262 @@ interface ModulePortalProps {
   repairs?: RepairHistory[];
   breakdowns?: BreakdownLog[];
   bookings?: WorkshopBooking[];
+  manpower?: ManpowerPerson[];
   onRefreshData?: () => void;
 }
+
+const DEFAULT_MANPOWER: ManpowerPerson[] = [
+  {
+    id: 'MP-001',
+    nrp: '72019',
+    name: 'Bambang Suherman',
+    role: 'Foreman',
+    skillLevel: 'Lead',
+    phone: '0812-8812-9011',
+    shift: 'Shift 1 (Pagi)',
+    status: 'On Duty',
+    assignedBay: 'Bay 1 - Heavy Dump',
+    activeJob: {
+      unitCode: 'DUMP-06',
+      unitName: 'Dump Truck Hauler Komatsu HD785-7',
+      jobType: 'Overhaul Transmisi & Final Drive',
+      bay: 'Bay 1 - Heavy Dump',
+      startTime: '2026-09-22 07:30',
+      targetHours: 12
+    },
+    standardMonthlyHours: 173,
+    actualWorkHours: 162,
+    flatRateHoursEarned: 181,
+    efficiencyRatio: 111.7,
+    utilizationRate: 93.6,
+    completedJobsCount: 28,
+    specialties: ['Supervisi Heavy Equipment', 'Troubleshooting Powertrain', 'Quality Control WO'],
+    certifications: ['POP Pertambangan ESDM', 'Komatsu Master Tech', 'K3 Pertambangan'],
+    joinedDate: '2021-03-15',
+    rating: 4.9
+  },
+  {
+    id: 'MP-006',
+    nrp: '81088',
+    name: 'Dedi Kurniawan',
+    role: 'Auto-Electrician',
+    skillLevel: 'Spesialis',
+    phone: '0812-7788-3401',
+    shift: 'Shift 1 (Pagi)',
+    status: 'In Job',
+    assignedBay: 'Bay 3 - Dozer',
+    activeJob: {
+      unitCode: 'BULL-02',
+      unitName: 'Bulldozer Komatsu D375A-6',
+      jobType: 'Troubleshooting Starter Motor & Alternator',
+      bay: 'Bay 3 - Dozer',
+      startTime: '2026-09-22 09:15',
+      targetHours: 4
+    },
+    standardMonthlyHours: 173,
+    actualWorkHours: 161,
+    flatRateHoursEarned: 178,
+    efficiencyRatio: 110.6,
+    utilizationRate: 93.1,
+    completedJobsCount: 26,
+    specialties: ['Wiring Harness 24V', 'Alternator & Starter Repair', 'Electronic Controller ECM'],
+    certifications: ['CAN-Bus Diagnostics', 'Electrical Safety Mining'],
+    joinedDate: '2022-08-01',
+    rating: 4.9
+  },
+  {
+    id: 'MP-003',
+    nrp: '81014',
+    name: 'Suryadi',
+    role: 'Mekanik',
+    skillLevel: 'Senior',
+    phone: '0813-7722-1920',
+    shift: 'Shift 1 (Pagi)',
+    status: 'In Job',
+    assignedBay: 'Bay 1 - Heavy Dump',
+    activeJob: {
+      unitCode: 'DUMP-06',
+      unitName: 'Dump Truck Hauler Komatsu HD785-7',
+      jobType: 'Ganti Pack Transmisi & Flushing Oli',
+      bay: 'Bay 1 - Heavy Dump',
+      startTime: '2026-09-22 08:00',
+      targetHours: 8
+    },
+    standardMonthlyHours: 173,
+    actualWorkHours: 165,
+    flatRateHoursEarned: 179,
+    efficiencyRatio: 108.5,
+    utilizationRate: 95.4,
+    completedJobsCount: 24,
+    specialties: ['Engine CAT C15/C27', 'Cummins QSK', 'Transmisi Allison/Komatsu'],
+    certifications: ['Komatsu Engine Specialist', 'Rigging & Lifting'],
+    joinedDate: '2022-06-10',
+    rating: 4.8
+  },
+  {
+    id: 'MP-004',
+    nrp: '81033',
+    name: 'Herianto',
+    role: 'Mekanik',
+    skillLevel: 'Senior',
+    phone: '0852-6611-9043',
+    shift: 'Shift 1 (Pagi)',
+    status: 'In Job',
+    assignedBay: 'Bay 2 - Excavator',
+    activeJob: {
+      unitCode: 'EXCA-01',
+      unitName: 'Excavator Komatsu PC2000-8',
+      jobType: 'Ganti Seal Main Pump & Kalibrasi Tekanan',
+      bay: 'Bay 2 - Excavator',
+      startTime: '2026-09-22 08:30',
+      targetHours: 6
+    },
+    standardMonthlyHours: 173,
+    actualWorkHours: 160,
+    flatRateHoursEarned: 171,
+    efficiencyRatio: 106.9,
+    utilizationRate: 92.5,
+    completedJobsCount: 21,
+    specialties: ['Sistem Hidrolik Tekanan Tinggi', 'Main Valve & Travel Motor'],
+    certifications: ['Parker Hydraulics Pro', 'K3 Ruang Terbatas'],
+    joinedDate: '2023-01-15',
+    rating: 4.8
+  },
+  {
+    id: 'MP-007',
+    nrp: '85012',
+    name: 'Hendra Saputra',
+    role: 'Tireman',
+    skillLevel: 'Lead',
+    phone: '0812-4411-9087',
+    shift: 'Shift 1 (Pagi)',
+    status: 'In Job',
+    assignedBay: 'Tire Bay Area',
+    activeJob: {
+      unitCode: 'DUMP-05',
+      unitName: 'Dump Truck Scania G460',
+      jobType: 'Rotasi Ban OTR & Penggantian Posisi 3-4',
+      bay: 'Tire Bay Area',
+      startTime: '2026-09-22 10:00',
+      targetHours: 3
+    },
+    standardMonthlyHours: 173,
+    actualWorkHours: 166,
+    flatRateHoursEarned: 177,
+    efficiencyRatio: 106.6,
+    utilizationRate: 96.0,
+    completedJobsCount: 34,
+    specialties: ['OTR Tyre Fitting (27.00R49)', 'Pressure & Heat Management', 'Tire Matching'],
+    certifications: ['TIA Certified Earthmover Tire Tech', 'Safety Cage Ops'],
+    joinedDate: '2021-09-01',
+    rating: 4.9
+  },
+  {
+    id: 'MP-002',
+    nrp: '74055',
+    name: 'Agus Priyanto',
+    role: 'Foreman',
+    skillLevel: 'Senior',
+    phone: '0813-9022-4512',
+    shift: 'Shift 2 (Malam)',
+    status: 'On Duty',
+    assignedBay: 'Workshop Central',
+    standardMonthlyHours: 173,
+    actualWorkHours: 159,
+    flatRateHoursEarned: 168,
+    efficiencyRatio: 105.7,
+    utilizationRate: 91.9,
+    completedJobsCount: 22,
+    specialties: ['Preventive Maintenance Fleet', 'Pelaporan Backlog & Inspeksi'],
+    certifications: ['POP Pertambangan ESDM', 'Auditor Internal K3'],
+    joinedDate: '2021-11-20',
+    rating: 4.7
+  },
+  {
+    id: 'MP-008',
+    nrp: '85033',
+    name: 'Wahyu Pratama',
+    role: 'Tireman',
+    skillLevel: 'Junior',
+    phone: '0853-2211-7890',
+    shift: 'Shift 1 (Pagi)',
+    status: 'In Job',
+    assignedBay: 'Tire Bay Area',
+    standardMonthlyHours: 173,
+    actualWorkHours: 160,
+    flatRateHoursEarned: 164,
+    efficiencyRatio: 102.5,
+    utilizationRate: 92.5,
+    completedJobsCount: 29,
+    specialties: ['Inspeksi Tread Depth', 'Torque Wheel Nut', 'Pembersihan Rim'],
+    certifications: ['Basic OTR Safety'],
+    joinedDate: '2024-02-15',
+    rating: 4.5
+  },
+  {
+    id: 'MP-005',
+    nrp: '82044',
+    name: 'Joko Susilo',
+    role: 'Mekanik',
+    skillLevel: 'Senior',
+    phone: '0813-4455-8812',
+    shift: 'Shift 2 (Malam)',
+    status: 'Standby',
+    assignedBay: 'Workshop Central',
+    standardMonthlyHours: 173,
+    actualWorkHours: 157,
+    flatRateHoursEarned: 160,
+    efficiencyRatio: 101.9,
+    utilizationRate: 90.8,
+    completedJobsCount: 19,
+    specialties: ['Brake System & Pneumatic', 'Wheel Hub Overhaul'],
+    certifications: ['Scania Master Tech'],
+    joinedDate: '2023-05-10',
+    rating: 4.6
+  },
+  {
+    id: 'MP-009',
+    nrp: '89011',
+    name: 'M. Arif',
+    role: 'Helper',
+    skillLevel: 'Senior',
+    phone: '0812-3344-9901',
+    shift: 'Shift 1 (Pagi)',
+    status: 'In Job',
+    assignedBay: 'Bay 1 - Heavy Dump',
+    standardMonthlyHours: 173,
+    actualWorkHours: 164,
+    flatRateHoursEarned: 159,
+    efficiencyRatio: 97.0,
+    utilizationRate: 94.8,
+    completedJobsCount: 31,
+    specialties: ['Toolbox Assistance', 'Washing & Degreasing Unit', 'Greasing Rutin'],
+    certifications: ['Basic Safety Mining'],
+    joinedDate: '2023-09-01',
+    rating: 4.5
+  },
+  {
+    id: 'MP-010',
+    nrp: '89045',
+    name: 'Fajar Rizky',
+    role: 'Helper',
+    skillLevel: 'Junior',
+    phone: '0878-1122-3344',
+    shift: 'Shift 2 (Malam)',
+    status: 'Standby',
+    assignedBay: 'Workshop Central',
+    standardMonthlyHours: 173,
+    actualWorkHours: 155,
+    flatRateHoursEarned: 148,
+    efficiencyRatio: 95.4,
+    utilizationRate: 89.6,
+    completedJobsCount: 25,
+    specialties: ['Support Servis Ringan', 'Material Handling', 'Housekeeping 5R'],
+    certifications: ['Basic Safety Mining'],
+    joinedDate: '2024-05-20',
+    rating: 4.3
+  }
+];
 
 export default function ModulePortal({ 
   onSelectModule, 
@@ -67,12 +329,105 @@ export default function ModulePortal({
   repairs = [],
   breakdowns = [],
   bookings = [],
+  manpower = [],
   onRefreshData
 }: ModulePortalProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<'30d' | 'current_month' | 'q3'>('current_month');
   const [activeTabOverview, setActiveTabOverview] = useState<'all' | 'reliability' | 'critical' | 'financial'>('all');
   const [problemTrendFilter, setProblemTrendFilter] = useState<'severity' | 'subsystem'>('severity');
   const [activeProblemMonth, setActiveProblemMonth] = useState<string | null>(null);
+
+  // Manpower state & live sync
+  const [manpowerData, setManpowerData] = useState<ManpowerPerson[]>(() => {
+    return manpower && manpower.length > 0 ? manpower : DEFAULT_MANPOWER;
+  });
+  const [manpowerChartMode, setManpowerChartMode] = useState<'flat_vs_actual' | 'efficiency_bars' | 'role_summary'>('flat_vs_actual');
+  const [hoveredManpowerId, setHoveredManpowerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (manpower && manpower.length > 0) {
+      setManpowerData(manpower);
+    } else {
+      fetch('/api/manpower')
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data && data.personnel && data.personnel.length > 0) {
+            setManpowerData(data.personnel);
+          }
+        })
+        .catch(err => console.error('Error fetching manpower for dashboard:', err));
+    }
+  }, [manpower]);
+
+  // Manpower calculations for chart & top 5 performers
+  const manpowerStats = useMemo(() => {
+    const list = manpowerData.length > 0 ? manpowerData : DEFAULT_MANPOWER;
+    const totalStaff = list.length;
+    const onDutyCount = list.filter(p => p.status === 'On Duty' || p.status === 'In Job').length;
+    const inJobCount = list.filter(p => p.status === 'In Job').length;
+    
+    let totalFlatRate = 0;
+    let totalActualHours = 0;
+    let totalStandardMonthly = 0;
+    let totalCompletedWO = 0;
+
+    list.forEach(p => {
+      totalFlatRate += Number(p.flatRateHoursEarned || 0);
+      totalActualHours += Number(p.actualWorkHours || 0);
+      totalStandardMonthly += Number(p.standardMonthlyHours || 173);
+      totalCompletedWO += Number(p.completedJobsCount || 0);
+    });
+
+    const avgEfficiency = totalActualHours > 0 
+      ? Number(((totalFlatRate / totalActualHours) * 100).toFixed(1))
+      : 104.9;
+    
+    const avgUtilization = totalStandardMonthly > 0
+      ? Number(((totalActualHours / totalStandardMonthly) * 100).toFixed(1))
+      : 92.3;
+
+    const hoursSurplus = Math.round(totalFlatRate - totalActualHours);
+
+    // Top 5 sorted by efficiencyRatio descending
+    const top5 = [...list]
+      .sort((a, b) => (b.efficiencyRatio || 0) - (a.efficiencyRatio || 0))
+      .slice(0, 5);
+
+    // Grouping by role
+    const roleMap = new Map<string, { role: string; count: number; totalFlat: number; totalActual: number; totalJobs: number }>();
+    list.forEach(p => {
+      const existing = roleMap.get(p.role) || { role: p.role, count: 0, totalFlat: 0, totalActual: 0, totalJobs: 0 };
+      existing.count += 1;
+      existing.totalFlat += p.flatRateHoursEarned || 0;
+      existing.totalActual += p.actualWorkHours || 0;
+      existing.totalJobs += p.completedJobsCount || 0;
+      roleMap.set(p.role, existing);
+    });
+
+    const roleBreakdown = Array.from(roleMap.values()).map(r => ({
+      role: r.role,
+      count: r.count,
+      totalJobs: r.totalJobs,
+      avgEfficiency: r.totalActual > 0 ? Number(((r.totalFlat / r.totalActual) * 100).toFixed(1)) : 100,
+      totalFlat: r.totalFlat,
+      totalActual: r.totalActual
+    })).sort((a, b) => b.avgEfficiency - a.avgEfficiency);
+
+    return {
+      list,
+      totalStaff,
+      onDutyCount,
+      inJobCount,
+      totalFlatRate,
+      totalActualHours,
+      avgEfficiency,
+      avgUtilization,
+      hoursSurplus,
+      totalCompletedWO,
+      top5,
+      roleBreakdown
+    };
+  }, [manpowerData]);
 
   // 1. Calculate PA, MTTR, MTBF
   const kpis = useMemo(() => {
@@ -494,6 +849,18 @@ export default function ModulePortal({
       iconBg: 'bg-purple-600 text-white',
       accentBorder: 'border-purple-500 hover:border-purple-600',
       stat: 'Siap Analisa Diagnosa'
+    },
+    {
+      id: 'manpower' as const,
+      title: 'Manpower',
+      subtitle: 'Mekanik & Tim Lapangan',
+      description: 'Manajemen personil mekanik, foreman, helper, tireman, pemantauan efisiensi flat-rate jam kerja & produktivitas tim bengkel.',
+      icon: Users,
+      badge: 'Produktivitas & Efisiensi',
+      badgeColor: 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+      iconBg: 'bg-blue-600 text-white',
+      accentBorder: 'border-blue-500 hover:border-blue-600',
+      stat: '10 Personil On Duty'
     }
   ];
 
@@ -1734,7 +2101,567 @@ export default function ModulePortal({
           </div>
         </div>
 
-        {/* SECTION 5: AKSES CEPAT MODUL OPERASIONAL (QUICK LAUNCHER) */}
+        {/* SECTION 5: MANPOWER WORKSHOP PRODUCTIVITY & EFFICIENCY (CHART & TOP 5 LEADERBOARD) */}
+        <div className="space-y-4 pt-1" id="manpower-productivity-overview">
+          {/* Section Main Header Card */}
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50">
+                <Users size={22} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-base sm:text-lg font-black font-mono uppercase tracking-wide text-slate-900 dark:text-white">
+                    PRODUKTIVITAS &amp; EFISIENSI MANPOWER WORKSHOP
+                  </h3>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Live Roster Sync
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-sans mt-0.5">
+                  Analisis perbandingan Jam Standar Flat-Rate (Standard Labour Time) vs Jam Kerja Aktual fisik, utilisasi personil, dan performa 5 personil mekanik/foreman terbaik.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+              <button
+                type="button"
+                onClick={() => onSelectModule('manpower')}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-mono font-bold transition-all shadow-xs cursor-pointer"
+              >
+                <Users size={14} />
+                <span>Buka Modul Manpower Lengkap</span>
+                <ArrowRight size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* Quick KPI Strip: 4 Key Metrics */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* KPI 1 */}
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-500">
+                <span>Rata-Rata Efisiensi Tim</span>
+                <span className="p-1 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400">
+                  <TrendingUp size={13} />
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400">
+                  {manpowerStats.avgEfficiency}%
+                </span>
+                <span className="text-[10px] font-mono text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded">
+                  +{((manpowerStats.avgEfficiency - 100)).toFixed(1)}% Standar
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-400 font-sans">
+                Target Standar Industri: 100.0%
+              </p>
+            </div>
+
+            {/* KPI 2 */}
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-500">
+                <span>Rata-Rata Utilisasi Jam</span>
+                <span className="p-1 rounded bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
+                  <Clock size={13} />
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-black font-mono text-blue-600 dark:text-blue-400">
+                  {manpowerStats.avgUtilization}%
+                </span>
+                <span className="text-[10px] font-mono text-slate-500 font-medium">
+                  Basis 173 Jam/Bln
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-400 font-sans">
+                Total Jam Fisik: {manpowerStats.totalActualHours} Jam
+              </p>
+            </div>
+
+            {/* KPI 3 */}
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-500">
+                <span>Total Jam Flat-Rate Selesai</span>
+                <span className="p-1 rounded bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-400">
+                  <Zap size={13} />
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-black font-mono text-purple-600 dark:text-purple-400">
+                  {manpowerStats.totalFlatRate}
+                </span>
+                <span className="text-[11px] font-mono text-slate-500 font-medium">Jam Earned</span>
+              </div>
+              <p className="text-[10px] text-slate-400 font-sans">
+                Dari {manpowerStats.totalCompletedWO} Work Order selesai
+              </p>
+            </div>
+
+            {/* KPI 4 */}
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-500">
+                <span>Surplus Jam Hemat (Produktivitas)</span>
+                <span className="p-1 rounded bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400">
+                  <Trophy size={13} />
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-black font-mono text-amber-600 dark:text-amber-400">
+                  +{manpowerStats.hoursSurplus} Jam
+                </span>
+                <span className="text-[10px] font-mono text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded">
+                  Surplus
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-400 font-sans">
+                {manpowerStats.onDutyCount} dari {manpowerStats.totalStaff} personil aktif on-duty
+              </p>
+            </div>
+          </div>
+
+          {/* Main Dual Grid: Left = Interactive Chart, Right = TOP 5 LEADERBOARD */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            {/* PANEL KIRI: GRAFIK PRODUKTIVITAS & EFISIENSI MANPOWER (lg:col-span-7) */}
+            <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs p-5 flex flex-col justify-between space-y-4">
+              <div className="space-y-4">
+                {/* Header & Mode Tabs */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <div>
+                    <h4 className="text-sm font-black font-mono uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+                      <BarChart3 size={17} className="text-blue-500" />
+                      <span>Grafik Produktivitas &amp; Efisiensi Personil</span>
+                    </h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">
+                      Perbandingan output kerja aktual terhadap standar flat-rate pabrikan
+                    </p>
+                  </div>
+
+                  {/* Mode Selector Tabs */}
+                  <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setManpowerChartMode('flat_vs_actual')}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                        manpowerChartMode === 'flat_vs_actual'
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      Flat vs Jam Fisik
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setManpowerChartMode('efficiency_bars')}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                        manpowerChartMode === 'efficiency_bars'
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      Rasio Efisiensi %
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setManpowerChartMode('role_summary')}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                        manpowerChartMode === 'role_summary'
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      Peran Tim
+                    </button>
+                  </div>
+                </div>
+
+                {/* CHART MODE 1: DUAL BAR (FLAT RATE VS ACTUAL WORK HOURS) */}
+                {manpowerChartMode === 'flat_vs_actual' && (
+                  <div className="space-y-3">
+                    {/* Legend */}
+                    <div className="flex flex-wrap items-center justify-between text-[11px] font-mono text-slate-500 bg-slate-50 dark:bg-slate-950/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 gap-2">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-3 h-3 rounded-sm bg-emerald-500 shrink-0"></span>
+                          <span className="text-slate-700 dark:text-slate-300 font-bold">Jam Flat-Rate (Earned)</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-3 h-3 rounded-sm bg-blue-500 shrink-0"></span>
+                          <span className="text-slate-700 dark:text-slate-300 font-bold">Jam Aktual (Fisik)</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-bold">
+                        <Zap size={12} />
+                        <span>Baseline Standar: 100% Efisiensi</span>
+                      </div>
+                    </div>
+
+                    {/* Dual Bars List */}
+                    <div className="space-y-2.5 max-h-[400px] overflow-y-auto pr-1">
+                      {manpowerStats.list.slice(0, 8).map((person, idx) => {
+                        const maxVal = 200; // scale reference
+                        const flatWidth = Math.min(100, Math.round((person.flatRateHoursEarned / maxVal) * 100));
+                        const actualWidth = Math.min(100, Math.round((person.actualWorkHours / maxVal) * 100));
+                        const surplusHours = person.flatRateHoursEarned - person.actualWorkHours;
+
+                        return (
+                          <div 
+                            key={person.id}
+                            onMouseEnter={() => setHoveredManpowerId(person.id)}
+                            onMouseLeave={() => setHoveredManpowerId(null)}
+                            className={`p-2.5 rounded-xl border transition-all ${
+                              hoveredManpowerId === person.id
+                                ? 'bg-blue-50/50 dark:bg-blue-950/30 border-blue-300 dark:border-blue-700 shadow-2xs'
+                                : 'bg-slate-50/70 dark:bg-slate-950/30 border-slate-100 dark:border-slate-800'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono font-black ${
+                                  idx === 0 ? 'bg-amber-400 text-slate-950 shadow-2xs' :
+                                  idx === 1 ? 'bg-slate-300 text-slate-900' :
+                                  idx === 2 ? 'bg-amber-700 text-white' :
+                                  'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                                }`}>
+                                  {idx + 1}
+                                </span>
+                                <div>
+                                  <span className="text-xs font-bold font-mono text-slate-900 dark:text-white">
+                                    {person.name}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 font-mono ml-1.5">
+                                    ({person.role} - {person.skillLevel})
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                                  surplusHours >= 0 
+                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                    : 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300'
+                                }`}>
+                                  {surplusHours >= 0 ? `+${surplusHours} Jam Hemat` : `${surplusHours} Jam`}
+                                </span>
+                                <span className="text-xs font-black font-mono text-slate-900 dark:text-white bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                                  {person.efficiencyRatio}%
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Dual Bars Container */}
+                            <div className="space-y-1">
+                              {/* Flat Rate Bar */}
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-mono text-slate-400 w-12 text-right">Flat:</span>
+                                <div className="flex-1 h-3 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden relative">
+                                  <div 
+                                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
+                                    style={{ width: `${flatWidth}%` }}
+                                  ></div>
+                                </div>
+                                <span className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400 w-16 text-right">
+                                  {person.flatRateHoursEarned} Jam
+                                </span>
+                              </div>
+
+                              {/* Actual Work Hours Bar */}
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-mono text-slate-400 w-12 text-right">Fisik:</span>
+                                <div className="flex-1 h-3 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden relative">
+                                  <div 
+                                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500"
+                                    style={{ width: `${actualWidth}%` }}
+                                  ></div>
+                                </div>
+                                <span className="text-[11px] font-mono font-bold text-blue-600 dark:text-blue-400 w-16 text-right">
+                                  {person.actualWorkHours} Jam
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* CHART MODE 2: EFFICIENCY RATIO PERCENTAGE BARS */}
+                {manpowerChartMode === 'efficiency_bars' && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 bg-slate-50 dark:bg-slate-950/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                      <span>Rasio = (Total Jam Flat-Rate ÷ Jam Aktual) × 100%</span>
+                      <span className="font-bold text-emerald-600">&gt; 100% = Produktif &amp; Hemat Waktu</span>
+                    </div>
+
+                    <div className="space-y-2.5 max-h-[400px] overflow-y-auto pr-1">
+                      {manpowerStats.list.map((person, idx) => {
+                        const barWidth = Math.min(100, Math.round((person.efficiencyRatio / 125) * 100));
+
+                        return (
+                          <div key={person.id} className="p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800 space-y-1.5">
+                            <div className="flex items-center justify-between text-xs font-mono">
+                              <div className="flex items-center gap-2">
+                                <span className="w-5 text-slate-400 font-bold">#{idx + 1}</span>
+                                <span className="font-bold text-slate-900 dark:text-white">{person.name}</span>
+                                <span className="text-[10px] text-slate-400">({person.role})</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-slate-500">{person.completedJobsCount} WO</span>
+                                <span className={`font-black font-mono text-xs px-2 py-0.5 rounded ${
+                                  person.efficiencyRatio >= 108
+                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300'
+                                    : person.efficiencyRatio >= 100
+                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300'
+                                    : 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300'
+                                }`}>
+                                  {person.efficiencyRatio}%
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Progress bar with 100% threshold marker */}
+                            <div className="h-3 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden relative">
+                              <div 
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                  person.efficiencyRatio >= 108
+                                    ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                                    : person.efficiencyRatio >= 100
+                                    ? 'bg-gradient-to-r from-blue-500 to-cyan-400'
+                                    : 'bg-gradient-to-r from-amber-500 to-yellow-400'
+                                }`}
+                                style={{ width: `${barWidth}%` }}
+                              ></div>
+                              <div 
+                                className="absolute top-0 bottom-0 w-0.5 bg-slate-900 dark:bg-white z-10 opacity-60"
+                                style={{ left: '80%' }}
+                                title="Target Benchmark: 100%"
+                              ></div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* CHART MODE 3: ROLE PERFORMANCE SUMMARY */}
+                {manpowerChartMode === 'role_summary' && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {manpowerStats.roleBreakdown.map((role) => (
+                        <div key={role.role} className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold font-mono text-slate-900 dark:text-white flex items-center gap-1.5">
+                              <HardHat size={14} className="text-blue-500" />
+                              <span>{role.role}</span>
+                            </span>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 font-bold">
+                              {role.count} Personil
+                            </span>
+                          </div>
+
+                          <div className="flex items-baseline justify-between pt-1">
+                            <div>
+                              <span className="text-[10px] text-slate-400 font-mono block">Rata-Rata Efisiensi</span>
+                              <span className="text-xl font-black font-mono text-emerald-600 dark:text-emerald-400">
+                                {role.avgEfficiency}%
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[10px] text-slate-400 font-mono block">WO Diselesaikan</span>
+                              <span className="text-sm font-black font-mono text-slate-800 dark:text-slate-200">
+                                {role.totalJobs} WO
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="pt-2 border-t border-slate-200 dark:border-slate-800 text-[11px] font-mono text-slate-500 flex justify-between">
+                            <span>Flat: <strong>{role.totalFlat} Jam</strong></span>
+                            <span>Fisik: <strong>{role.totalActual} Jam</strong></span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Chart Footer Note */}
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-mono text-slate-500">
+                <span className="text-[11px]">
+                  Formula: (Jam Standar Flat Rate ÷ Jam Aktual Fisik) × 100%
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onSelectModule('manpower')}
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <span>Lihat Roster Lengkap</span>
+                  <ArrowRight size={13} />
+                </button>
+              </div>
+            </div>
+
+            {/* PANEL KANAN: TOP 5 PERINGKAT TERATAS MANPOWER (LEADERBOARD) (lg:col-span-5) */}
+            <div className="lg:col-span-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs p-5 flex flex-col justify-between space-y-4">
+              <div className="space-y-3.5">
+                {/* Header Leaderboard */}
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900">
+                      <Trophy size={18} />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-extrabold font-mono uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <span>TOP 5 PERINGKAT TERATAS MANPOWER</span>
+                      </h4>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">
+                        Produktivitas flat-rate &amp; efisiensi tertinggi workshop bulan ini
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                    Leaderboard
+                  </span>
+                </div>
+
+                {/* TOP 5 Cards */}
+                <div className="space-y-2.5">
+                  {manpowerStats.top5.map((performer, rankIdx) => {
+                    const isRank1 = rankIdx === 0;
+                    const isRank2 = rankIdx === 1;
+                    const isRank3 = rankIdx === 2;
+                    const hoursDiff = performer.flatRateHoursEarned - performer.actualWorkHours;
+
+                    return (
+                      <div
+                        key={performer.id}
+                        className={`p-3 rounded-xl border transition-all ${
+                          isRank1
+                            ? 'border-amber-400 dark:border-amber-500/80 bg-gradient-to-r from-amber-50/80 via-amber-50/40 to-white dark:from-amber-950/40 dark:via-amber-950/20 dark:to-slate-900 shadow-sm'
+                            : isRank2
+                            ? 'border-slate-300 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40'
+                            : isRank3
+                            ? 'border-amber-700/40 dark:border-amber-800/50 bg-amber-900/5 dark:bg-amber-950/20'
+                            : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          {/* Rank Icon & Identity */}
+                          <div className="flex items-start gap-2.5">
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-mono font-black text-sm shrink-0 ${
+                              isRank1
+                                ? 'bg-amber-400 text-slate-950 shadow-xs ring-2 ring-amber-400/50'
+                                : isRank2
+                                ? 'bg-slate-300 text-slate-900'
+                                : isRank3
+                                ? 'bg-amber-700 text-white'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                            }`}>
+                              {isRank1 ? '🥇' : isRank2 ? '🥈' : isRank3 ? '🥉' : `#${rankIdx + 1}`}
+                            </div>
+
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <h5 className="text-xs font-black font-mono text-slate-900 dark:text-white">
+                                  {performer.name}
+                                </h5>
+                                {isRank1 && (
+                                  <span className="text-[9px] font-mono font-black px-1.5 py-0.2 rounded bg-amber-500 text-slate-950 uppercase tracking-wider">
+                                    TOP 1
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-500 flex-wrap">
+                                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                                  {performer.role}
+                                </span>
+                                <span>&bull;</span>
+                                <span className="text-blue-600 dark:text-blue-400 font-medium">
+                                  {performer.skillLevel}
+                                </span>
+                                <span>&bull;</span>
+                                <span className="text-slate-400">NRP: {performer.nrp}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Efficiency Score KPI */}
+                          <div className="text-right shrink-0">
+                            <div className="text-base font-black font-mono text-emerald-600 dark:text-emerald-400">
+                              {performer.efficiencyRatio}%
+                            </div>
+                            <span className="text-[9px] font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 px-1.5 py-0.5 rounded">
+                              +{hoursDiff} Jam Hemat
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Metrics Bar: Flat vs Actual & Jobs Done */}
+                        <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[10px] font-mono">
+                          <div className="flex items-center gap-2 text-slate-500">
+                            <span>Flat: <strong className="text-slate-900 dark:text-white">{performer.flatRateHoursEarned}h</strong></span>
+                            <span>&bull;</span>
+                            <span>Fisik: <strong className="text-slate-900 dark:text-white">{performer.actualWorkHours}h</strong></span>
+                            <span>&bull;</span>
+                            <span>WO: <strong className="text-blue-600 dark:text-blue-400">{performer.completedJobsCount}</strong></span>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <span className={`w-1.5 h-1.5 rounded-full ${
+                              performer.status === 'In Job' ? 'bg-blue-500' : 'bg-emerald-500'
+                            }`}></span>
+                            <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">
+                              {performer.status}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Top Specialization Tag */}
+                        {performer.specialties && performer.specialties.length > 0 && (
+                          <div className="mt-1.5 flex items-center gap-1 flex-wrap">
+                            <span className="text-[9px] font-mono text-slate-400">Spesialisasi:</span>
+                            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                              {performer.specialties[0]}
+                            </span>
+                            {performer.specialties[1] && (
+                              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                {performer.specialties[1]}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Leaderboard Action Footer */}
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <span className="text-xs text-slate-400 font-mono">
+                  {manpowerStats.totalStaff} Personil Workshop Terdaftar
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onSelectModule('manpower')}
+                  className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <span>Buka Modul Manpower</span>
+                  <ArrowRight size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 6: AKSES CEPAT MODUL OPERASIONAL (QUICK LAUNCHER) */}
         <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2.5">
             <div>
@@ -1747,11 +2674,11 @@ export default function ModulePortal({
               </p>
             </div>
             <span className="text-[11px] font-mono text-slate-400 dark:text-slate-500">
-              4 Modul Tersedia
+              5 Modul Terintegrasi
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="quick-module-launcher-cards">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4" id="quick-module-launcher-cards">
             {modules.map((mod) => {
               const Icon = mod.icon;
               return (

@@ -238,3 +238,79 @@ export interface DashboardStats {
   lowStockCount: number;
   activeBookings: number;
 }
+
+// ----------------------------------------------------
+// MANPOWER MANAGEMENT & PRODUCTIVITY TRACKING TYPES
+// ----------------------------------------------------
+
+export type ManpowerRole = 'Foreman' | 'Mekanik' | 'Helper' | 'Tireman' | 'Auto-Electrician' | 'Welder';
+
+export type ManpowerSkillLevel = 'Junior' | 'Senior' | 'Lead' | 'Spesialis';
+
+export type ManpowerShift = 'Shift 1 (Pagi)' | 'Shift 2 (Malam)' | 'Roster Off' | 'Standby';
+
+export type ManpowerStatus = 'On Duty' | 'In Job' | 'Standby' | 'Roster Off' | 'Cuti / Izin' | 'Sakit';
+
+export interface ActiveJobAssignment {
+  workOrderId?: string;
+  unitCode: string;
+  unitName?: string;
+  jobType: string;
+  bay?: string;
+  startTime: string;
+  targetHours: number;
+}
+
+export interface WeeklyRosterSchedule {
+  monday: ManpowerShift;
+  tuesday: ManpowerShift;
+  wednesday: ManpowerShift;
+  thursday: ManpowerShift;
+  friday: ManpowerShift;
+  saturday: ManpowerShift;
+  sunday: ManpowerShift;
+}
+
+export interface ManpowerPerson {
+  id: string;
+  nrp: string; // Nomor Registrasi Pegawai
+  name: string;
+  role: ManpowerRole;
+  skillLevel: ManpowerSkillLevel;
+  phone: string;
+  email?: string;
+  shift: ManpowerShift;
+  status: ManpowerStatus;
+  assignedBay?: string;
+  activeJob?: ActiveJobAssignment | null;
+  weeklyRoster?: WeeklyRosterSchedule;
+  checkInTime?: string;
+  standardMonthlyHours: number; // Default standar jam kerja per bulan (173 jam)
+  actualWorkHours: number; // Jam aktual kerja fisik bulan berjalan
+  flatRateHoursEarned: number; // Jam standar flat rate yang berhasil diselesaikan
+  efficiencyRatio: number; // (flatRateHoursEarned / actualWorkHours) * 100
+  utilizationRate: number; // (actualWorkHours / standardMonthlyHours) * 100
+  completedJobsCount: number; // Jumlah WO/tugas yang diselesaikan bulan ini
+  specialties: string[]; // Keahlian khusus, misal: 'Engine Overhaul', 'Troubleshooting Hidrolik'
+  certifications: string[]; // Sertifikasi: 'POP Pertambangan', 'Komatsu Specialist', 'Tire OTR Level 2'
+  joinedDate: string; // YYYY-MM-DD
+  rating: number; // 1.0 - 5.0
+  notes?: string;
+}
+
+export interface ManpowerTaskLog {
+  id: string;
+  personId: string;
+  personName: string;
+  role: ManpowerRole;
+  unitCode: string;
+  taskTitle: string;
+  category: 'Preventive Maintenance' | 'Breakdown / Corrective' | 'Tire Management' | 'Inspection & Backlog' | 'Welding & Fabrikasi' | 'General Repair';
+  completedAt: string;
+  actualHours: number;
+  flatRateHours: number;
+  efficiencyScore: number; // (flatRateHours / actualHours) * 100
+  status: 'Completed' | 'Pending QC';
+  notes?: string;
+}
+

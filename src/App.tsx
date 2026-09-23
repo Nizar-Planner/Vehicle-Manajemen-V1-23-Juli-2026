@@ -43,7 +43,8 @@ import {
   Mechanic,
   AppUser,
   AppSettings,
-  MechanicInspection
+  MechanicInspection,
+  ManpowerPerson
 } from './types';
 
 import Dashboard from './components/Dashboard';
@@ -60,13 +61,14 @@ import ModulePortal from './components/ModulePortal';
 import LogisticPortal from './components/LogisticPortal';
 import PurchasingPortal from './components/PurchasingPortal';
 import ConsultationPortal from './components/ConsultationPortal';
+import ManpowerPortal from './components/ManpowerPortal';
 import BrandLogo from './components/BrandLogo';
 import BrandKitModal from './components/BrandKitModal';
 import ServiceNeededModal from './components/ServiceNeededModal';
 
 export default function App() {
   // Navigation states
-  const [activeModule, setActiveModule] = useState<'portal' | 'maintenance' | 'logistic' | 'purchasing' | 'consultation'>('portal');
+  const [activeModule, setActiveModule] = useState<'portal' | 'maintenance' | 'logistic' | 'purchasing' | 'consultation' | 'manpower'>('portal');
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isBrandKitOpen, setIsBrandKitOpen] = useState(false);
@@ -129,6 +131,7 @@ export default function App() {
     lowStockCount: 0,
     activeBookings: 0,
   });
+  const [manpower, setManpower] = useState<ManpowerPerson[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -140,7 +143,7 @@ export default function App() {
   const fetchAllData = async () => {
     setIsLoading(true);
     try {
-      const [resStats, resUio, resParts, resBookings, resBreakdowns, resRepairs, resHmLogs, resMechanics, resUsers, resSettings, resInspections] = await Promise.all([
+      const [resStats, resUio, resParts, resBookings, resBreakdowns, resRepairs, resHmLogs, resMechanics, resUsers, resSettings, resInspections, resManpower] = await Promise.all([
         fetch('/api/stats'),
         fetch('/api/uio'),
         fetch('/api/warehouse'),
@@ -151,7 +154,8 @@ export default function App() {
         fetch('/api/mechanics'),
         fetch('/api/users'),
         fetch('/api/settings'),
-        fetch('/api/inspections')
+        fetch('/api/inspections'),
+        fetch('/api/manpower')
       ]);
 
       if (resStats.ok) setStats(await resStats.json());
@@ -174,6 +178,10 @@ export default function App() {
       }
       if (resSettings && resSettings.ok) setAppSettings(await resSettings.json());
       if (resInspections && resInspections.ok) setInspections(await resInspections.json());
+      if (resManpower && resManpower.ok) {
+        const mpData = await resManpower.json();
+        setManpower(mpData.personnel || []);
+      }
     } catch (err) {
       console.error('Error fetching data from server:', err);
     } finally {
@@ -633,6 +641,18 @@ export default function App() {
                           <span>Consultation &amp; AI</span>
                         </div>
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => { setActiveModule('manpower'); setIsMenuOpen(false); }}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-mono font-bold transition-all ${
+                          activeModule === 'manpower' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Users size={15} />
+                          <span>Manpower &amp; Personil</span>
+                        </div>
+                      </button>
                     </div>
 
                     {/* Submenu for Maintenance */}
@@ -941,6 +961,7 @@ export default function App() {
                   repairs={repairs}
                   breakdowns={breakdowns}
                   bookings={bookings}
+                  manpower={manpower}
                   onRefreshData={fetchAllData}
                 />
               )}
@@ -959,6 +980,19 @@ export default function App() {
 
               {activeModule === 'consultation' && (
                 <ConsultationPortal units={units} />
+              )}
+
+              {activeModule === 'manpower' && (
+                <ManpowerPortal 
+                  units={units}
+                  bookings={bookings}
+                  repairs={repairs}
+                  onBackToPortal={() => setActiveModule('portal')}
+                  onNavigateToBooking={() => {
+                    setActiveModule('maintenance');
+                    setActiveTab('bookings');
+                  }}
+                />
               )}
 
               {activeModule === 'maintenance' && (
