@@ -1259,6 +1259,12 @@ app.post("/api/uio/:id/update-hm", (req, res) => {
 
   unit.currentHm = nextHm;
   unit.currentKm = nextKm;
+  if (req.body.status) {
+    unit.status = req.body.status;
+  }
+  if (req.body.location) {
+    unit.location = req.body.location;
+  }
   if (notes) {
     unit.notes = notes;
   }
@@ -1273,7 +1279,7 @@ app.post("/api/uio/:id/update-hm", (req, res) => {
     previousKm,
     newKm: nextKm,
     updatedAt: new Date().toISOString().replace("T", " ").substring(0, 16),
-    notes: notes || `Update HM/KM rutin (HM: ${previousHm} -> ${nextHm}, KM: ${previousKm} -> ${nextKm})`
+    notes: notes || `Update HM/KM rutin (HM: ${previousHm} -> ${nextHm}, KM: ${previousKm} -> ${nextKm}, Status: ${unit.status})`
   };
   
   if (!db.hmLogs) db.hmLogs = [];
@@ -1281,6 +1287,52 @@ app.post("/api/uio/:id/update-hm", (req, res) => {
 
   saveDatabase();
   res.json(unit);
+});
+
+// Bulk/Batch update HM/KM for multiple units at once
+app.post("/api/uio/batch-update-hm", (req, res) => {
+  const { updates, updatedBy } = req.body;
+  if (!Array.isArray(updates) || updates.length === 0) {
+    return res.status(400).json({ error: "Array of updates is required" });
+  }
+
+  const results: any[] = [];
+  const nowStr = new Date().toISOString().replace("T", " ").substring(0, 16);
+  if (!db.hmLogs) db.hmLogs = [];
+
+  for (const item of updates) {
+    const { unitId, currentHm, currentKm, status, location, notes } = item;
+    const unit = db.uioUnits.find(u => u.id === unitId);
+    if (!unit) continue;
+
+    const previousHm = unit.currentHm;
+    const previousKm = unit.currentKm || 0;
+    const nextHm = currentHm !== undefined ? Number(currentHm) : previousHm;
+    const nextKm = currentKm !== undefined ? Number(currentKm) : previousKm;
+
+    unit.currentHm = nextHm;
+    unit.currentKm = nextKm;
+    if (status) unit.status = status;
+    if (location) unit.location = location;
+    if (notes) unit.notes = notes;
+
+    db.hmLogs.push({
+      id: generateId("HML"),
+      unitId: unit.id,
+      unitCode: unit.code,
+      previousHm,
+      newHm: nextHm,
+      previousKm,
+      newKm: nextKm,
+      updatedAt: nowStr,
+      notes: notes || `Batch Update HM/KM oleh ${updatedBy || 'Admin'} (HM: ${previousHm} -> ${nextHm}, Status: ${unit.status})`
+    });
+
+    results.push(unit);
+  }
+
+  saveDatabase();
+  res.json({ success: true, count: results.length, units: results });
 });
 
 // GET HM Logs

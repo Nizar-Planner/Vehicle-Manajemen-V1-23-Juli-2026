@@ -62,13 +62,14 @@ import LogisticPortal from './components/LogisticPortal';
 import PurchasingPortal from './components/PurchasingPortal';
 import ConsultationPortal from './components/ConsultationPortal';
 import ManpowerPortal from './components/ManpowerPortal';
+import UnitControlPortal from './components/UnitControlPortal';
 import BrandLogo from './components/BrandLogo';
 import BrandKitModal from './components/BrandKitModal';
 import ServiceNeededModal from './components/ServiceNeededModal';
 
 export default function App() {
   // Navigation states
-  const [activeModule, setActiveModule] = useState<'portal' | 'maintenance' | 'logistic' | 'purchasing' | 'consultation' | 'manpower'>('portal');
+  const [activeModule, setActiveModule] = useState<'portal' | 'maintenance' | 'logistic' | 'purchasing' | 'consultation' | 'manpower' | 'unit_control'>('portal');
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isBrandKitOpen, setIsBrandKitOpen] = useState(false);
@@ -653,6 +654,18 @@ export default function App() {
                           <span>Manpower &amp; Personil</span>
                         </div>
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => { setActiveModule('unit_control'); setIsMenuOpen(false); }}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-mono font-bold transition-all ${
+                          activeModule === 'unit_control' ? 'bg-red-600 text-white shadow-xs' : 'text-slate-300 hover:bg-slate-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Gauge size={15} />
+                          <span>Update HM/KM &amp; Status Unit</span>
+                        </div>
+                      </button>
                     </div>
 
                     {/* Submenu for Maintenance */}
@@ -735,6 +748,8 @@ export default function App() {
               {activeModule === 'logistic' && 'Logistic'}
               {activeModule === 'purchasing' && 'Purchasing'}
               {activeModule === 'consultation' && 'Consultation'}
+              {activeModule === 'manpower' && 'Manpower'}
+              {activeModule === 'unit_control' && 'HM/KM & Status Unit'}
             </span>
           </div>
 
@@ -969,6 +984,8 @@ export default function App() {
               {activeModule === 'logistic' && (
                 <LogisticPortal 
                   parts={parts} 
+                  units={units}
+                  currentUser={currentUser}
                   onAddPart={handleAddSparePart}
                   onUpdatePart={handleUpdateSparePart}
                 />
@@ -989,6 +1006,20 @@ export default function App() {
                   repairs={repairs}
                   onBackToPortal={() => setActiveModule('portal')}
                   onNavigateToBooking={() => {
+                    setActiveModule('maintenance');
+                    setActiveTab('bookings');
+                  }}
+                />
+              )}
+
+              {activeModule === 'unit_control' && (
+                <UnitControlPortal 
+                  units={units}
+                  hmLogs={hmLogs}
+                  currentUser={currentUser}
+                  onUpdateHm={handleUpdateHm}
+                  onRefreshData={fetchAllData}
+                  onNavigateToBooking={(unit) => {
                     setActiveModule('maintenance');
                     setActiveTab('bookings');
                   }}

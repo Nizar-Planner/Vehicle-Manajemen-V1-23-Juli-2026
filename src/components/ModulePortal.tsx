@@ -50,8 +50,8 @@ import BrandLogo from './BrandLogo';
 import { AppUser, UioUnit, SparePart, RepairHistory, BreakdownLog, WorkshopBooking, ManpowerPerson } from '../types';
 
 interface ModulePortalProps {
-  onSelectModule: (module: 'maintenance' | 'logistic' | 'purchasing' | 'consultation' | 'manpower') => void;
-  onNavigateTab?: (module: 'maintenance' | 'logistic' | 'purchasing' | 'consultation' | 'manpower', tab: string) => void;
+  onSelectModule: (module: 'maintenance' | 'logistic' | 'purchasing' | 'consultation' | 'manpower' | 'unit_control') => void;
+  onNavigateTab?: (module: 'maintenance' | 'logistic' | 'purchasing' | 'consultation' | 'manpower' | 'unit_control', tab: string) => void;
   onOpenBrandKit?: () => void;
   stats?: {
     totalUnits: number;
@@ -840,6 +840,18 @@ export default function ModulePortal({
   // Quick module launch shortcuts
   const modules = [
     {
+      id: 'unit_control' as const,
+      title: 'Update HM/KM & Status Unit',
+      subtitle: 'Monitoring Operasi, Standby & Breakdown',
+      description: 'Pusat update telemetry harian HM/KM seluruh unit armada, pantau unit Beroperasi, Standby, dan Breakdown untuk kesiapan Servis Berkala (Periodic Maintenance).',
+      icon: Gauge,
+      badge: 'Basis Periodik Maintenance',
+      badgeColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+      iconBg: 'bg-red-600 text-white',
+      accentBorder: 'border-red-500 hover:border-red-600',
+      stat: `${units.filter(u => u.status === 'Operating').length} Beroperasi / ${units.length || 6} Total Unit`
+    },
+    {
       id: 'maintenance' as const,
       title: 'Maintenance',
       subtitle: 'Armada & Bengkel',
@@ -853,9 +865,9 @@ export default function ModulePortal({
     },
     {
       id: 'logistic' as const,
-      title: 'Logistic',
-      subtitle: 'Gudang Suku Cadang',
-      description: 'Kontrol stok fisik sparepart, monitoring stok kritis & kosong, bin location rak, dan mutasi barang keluar/masuk.',
+      title: 'Logistic & Auto Part Flow Control',
+      subtitle: 'Alur Suku Cadang & Gudang Terintegrasi',
+      description: 'Terintegrasi dengan Google AI Studio auto-part-flow-control: kendali alur sparepart, tracking QC & Bin location, alokasi Work Order, serta mutasi in/out.',
       icon: Boxes,
       badge: `${zeroStockParts.length} Part Kosong`,
       badgeColor: 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800',
